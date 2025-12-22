@@ -1,0 +1,35 @@
+experiment:
+  name: gestures_ovis2
+  seed: 42
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/gestures_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Gestures
+
+task:
+  type: classification
+  labels:
+  - yes
+  - no
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, Indicate whether the child engages in a motion or motions that signal(s) or attempt(s) to signal nonverbal communication.
+    Possible labels are:[yes,no].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy

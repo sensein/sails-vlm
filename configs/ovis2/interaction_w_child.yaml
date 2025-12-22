@@ -1,0 +1,41 @@
+experiment:
+  name: interaction_w_child_ovis2
+  seed: 42
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/interaction_w_child_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Interaction_with_child
+
+task:
+  type: classification
+  labels:
+  - yes
+  - no
+
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, indicate whether there is a social interaction or attempt directed toward the target child.
+    This could be by the person filming the video or another individual in the video.
+
+    Rate "yes" if there is a social interaction or an attempt directed toward the child (e.g., the person filming asks the child questions or makes a comment to the child).
+    Rate "no" if there is no interaction/attempt directed toward the child (e.g., the video is of the child paging through a book on their own with no one engaging them).
+
+    Possible labels are: [yes, no].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy

@@ -1,0 +1,39 @@
+experiment:
+  name: response_to_name_ovis2
+  seed: 42
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/response_to_name_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Response_to_name
+
+task:
+  type: classification
+  labels:
+  - yes
+  - no
+  - inconsistent
+  - NaN
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, Indicate whether an overt attempt to gain child’s attention via use of their name or nickname occurs. Do not include use of name in conversation. Rate “yes” if the child looks
+    toward the person saying their name immediately. Rate “no” if the child does not react to hearing their name. Rate “inconsistent” if multiple attempts are made and different
+    responses are observed. Rate NaN” if no overt attempt is made.
+    Possible labels are:[yes,no,inconsistent,NaN].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy

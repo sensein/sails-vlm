@@ -1,0 +1,45 @@
+experiment:
+  name: gesture_type_ovis2
+  seed: 42
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/gesture_type_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Gesture_type
+
+task:
+  type: classification
+  labels:
+  - reach
+  - show
+  - give
+  - point
+  - take
+  - head shake
+  - head nod
+  - wave
+  - clap
+  - sign
+  - multiple
+  - NaN
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, classify the gesture being performed.
+    Possible labels are:[reach,show,give,point,take,head shake,head nod,wave,clap,sign,multiple,NaN].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy

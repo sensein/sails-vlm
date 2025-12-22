@@ -1,0 +1,65 @@
+experiment:
+  name: activity_ovis2
+  seed: 42
+  description: >
+    Free-text activity description of what the child is doing in the video.
+    The model should produce a natural language sentence or short paragraph.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+data:
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/test.csv
+  label_column: Activity
+  video_path_column: BidsProcessed
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/activity_ovis2
+  save_predictions: true
+
+task:
+  type: description
+  output_format:
+    style: free_text
+    constraints:
+    - Describe only what is visible in the video
+    - Focus on the child's activity
+    - Do not infer intentions or emotions unless clearly visible
+    - Use short, concrete phrases
+    - Do not include timestamps
+    - Do not mention the camera or recording setup
+
+prompt:
+  message: |
+    You are a video understanding model.
+
+    Your task is to describe the ACTIVITY performed by the child in the video.
+
+    Activity definition:
+    A more detailed description of the events in the video.
+    It should provide further detail about the child's actions.
+    The description should be consistent with the broader context but more specific.
+
+    Examples:
+    - Context: motor play → Activity: gymnastics or tumbling
+    - Context: book play → Activity: adult reading a book to the child
+    - Context: social play → Activity: laughing, tickling, engaging with an adult
+
+    Instructions:
+    - Describe only observable actions
+    - Use ONLY ONE short descriptive phrase or sentence
+    - Do not list multiple unrelated activities
+    - Do not explain or justify your answer
+
+    Now describe the activity in the video.
+
+evaluation:
+  type: text
+  metrics:
+  - none
+  notes: |
+    Free-text activity descriptions are not automatically scored.
+    Evaluation may be qualitative or based on downstream analysis.
