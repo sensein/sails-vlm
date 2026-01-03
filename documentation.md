@@ -34,6 +34,35 @@ poetry run python vlm_baseline/runners/run_prediction.py vlm_baseline/configs/ov
 
 A config defines one complete experiment (one model + one task + one dataset + one prompt + one output directory). If you want to try a vlm on a particular annotation prediction, feel free to create a new configuration file with the same structure as the ones already present.
 
+### Handling YAML booleans
+
+YAML treats the following as boolean values:
+ - no
+ - yes
+ - on
+ - off
+
+If these are being used as ground-truth labels, ensure they are enclosed by single or double quotes. Otherwise they will be converted to their boolean counterparts and produce unexpected behavior.
+
+### Handling missing / NaN labels in the ground-truth CSV
+
+Some label columns in the annotation CSV contain missing values (pandas `NaN`).
+
+- For **classification** tasks, the runner normally converts missing values to the
+  literal string `"NaN"` internally.
+- For **description** tasks, the runner converts missing values to the empty string `""`.
+
+If you want to **exclude unlabeled rows entirely**,
+set the following in your config:
+
+```yaml
+data:
+  drop_missing_labels: true
+```
+
+When enabled, rows with missing ground-truth labels are removed **before any VLM
+inference** (those videos are not processed and do not appear in predictions/eval).
+
 ## Models (models/)
 
 This folder contains thin wrappers around VLM backends (Ovis2, Qwen2.5, …).

@@ -1,0 +1,56 @@
+experiment:
+  name: support_type_ovis2
+  seed: 42
+  description: >
+    Classification task: categorize the general type/topography of assistance
+    to the child (verbal, physical, both, other). Ground truth also contains a
+    "no" category and missing values.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/support_type_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Support_type
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+  - verbal
+  - physical
+  - both
+  - other
+  - "no"
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, classify the general type/topography of assistance
+    provided to the child.
+
+    Definitions:
+    - verbal: helping the child via spoken language (e.g., praise, directions, questions,
+      prompts, modeling language)
+    - physical: helping the child via physical touch (e.g., holding hands, lifting up,
+      modeling an activity, removing an object, pushing a swing)
+    - both: both verbal and physical supports occur
+    - other: a support that does not fall into verbal or physical
+    - no: no assistive support occurs
+
+    Possible labels are: [verbal, physical, both, other, no].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy
+
+

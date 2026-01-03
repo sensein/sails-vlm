@@ -92,6 +92,20 @@ def main(config_path: str) -> None:
             "classification and description tasks."
         )
 
+    # ---------------------------
+    # Optionally drop rows with missing ground-truth labels
+    # ---------------------------
+    drop_missing_labels = bool(
+        cfg.get("data", {}).get(
+            "drop_missing_labels", False
+        )
+    )
+    dropped_missing_labels = 0
+    if drop_missing_labels:
+        before = len(df)
+        df = df[df[label_col].notna()].copy()
+        dropped_missing_labels = before - len(df)
+
     allowed_labels: List[str] = []
     if task_type == "classification":
         allowed_labels = list(cfg["task"]["labels"])
@@ -104,6 +118,17 @@ def main(config_path: str) -> None:
 
     y_true: List[str] = []
     y_pred: List[str] = []
+
+    # ---------------------------
+    # Output Run Information (Task, Labels, Number of Videos, Number of Videos with Missing Labels, etc.)
+    # ---------------------------
+
+    print(f"Experiment: {exp_name}")
+    print(f"Task: {task_type}")
+    print(f"Labels: {allowed_labels}")
+    print(f"Number of Samples with Ground-Truth Labels (non-NaN): {len(df[df[label_col].notna()])}")
+    print(f"Number of Samples with Missing Ground-Truth Labels (NaN): {dropped_missing_labels if drop_missing_labels else len(df[df[label_col].isna()])}")
+    print(f"Missing Ground-Truth Labels Dropped?: {drop_missing_labels}")
 
     # ---------------------------
     # Progress bar counters
@@ -244,6 +269,8 @@ def main(config_path: str) -> None:
         "model": cfg["model"]["name"],
         "task": task_type,
         "num_samples": int(len(pred_df)),
+        "dropped_missing_labels": int(dropped_missing_labels),
+        "drop_missing_labels_enabled": bool(drop_missing_labels),
         "metrics": metrics,
         "files": {
             "predictions_csv": str(out_dir / "predictions.csv"),

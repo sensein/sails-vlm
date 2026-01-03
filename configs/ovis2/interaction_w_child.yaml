@@ -20,8 +20,8 @@ data:
 task:
   type: classification
   labels:
-  - yes
-  - no
+  - "yes"
+  - "no"
 
 
 prompt:
