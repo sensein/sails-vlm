@@ -1,0 +1,49 @@
+experiment:
+  name: locomotion_ovis2
+  seed: 42
+  description: >
+    Classification task: indicate whether the child demonstrated the ability
+    to get from one place to another.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/locomotion_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Locomotion
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+  - "yes"
+  - "no"
+  - "assisted"
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, indicate whether the child demonstrated the ability
+    to get from one place to another.
+
+    Rate "yes" if any independent movement occurs (e.g., child crawls or runs in video).
+    Rate "no" if child is stationary/remains in one place (e.g., child is sitting for
+    duration of video).
+    Rate "assisted" if child receives help from another individual to move (e.g., child
+    walks while holding an adult's hand in video).
+
+    Possible labels are: [yes, no, assisted].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy
+

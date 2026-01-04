@@ -1,0 +1,58 @@
+experiment:
+  name: locomotion_type_ovis2
+  seed: 42
+  description: >
+    Classification task: classify the type(s) of locomotion demonstrated by the child
+    in the video.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/locomotion_type_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Locomotion_type
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+  - crawl
+  - cruise
+  - walk
+  - run
+  - vehicle
+  - multiple
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, classify the type of locomotion demonstrated by the child.
+
+    Definitions:
+    - crawl: Any instance of motion in any direction while child is on all fours (can be
+      hands and knees or hands and feet)
+    - cruise: Any instance of motion in any direction while child is holding onto an
+      inanimate object (e.g., table, chair, toy, wall, etc.) for support
+    - walk: Any instance of motion in any direction while child is in a bipedal stance,
+      moving at a slow pace, and one foot is always on the ground
+    - run: Any instance of motion in any direction while child is in a bipedal stance,
+      moving quickly, and at times both feet are off the ground
+    - vehicle: Any instance of a child using a toy vehicle (e.g., scooter, walking bike,
+      etc.) to move in any direction
+    - multiple: Demonstration of more than one of the above locomotion types in the same video
+
+    Possible labels are: [crawl, cruise, walk, run, vehicle, multiple].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy
+

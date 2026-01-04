@@ -1,0 +1,51 @@
+experiment:
+  name: grasp_type_ovis2
+  seed: 42
+  description: >
+    Classification task: classify the type of grasp used by the child when holding
+    an object or objects.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/grasp_type_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Grasp_type
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+  - "whole hand"
+  - pincer
+  - multiple
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, classify the type of grasp used by the child when
+    holding an object or objects.
+
+    Definitions:
+    - whole hand: Multiple or all fingers and thumb are used to grab or pick up
+      an object or objects
+    - pincer: Forefinger and thumb are isolated and used to grab or pick up an
+      object or objects
+    - multiple: Both grasp types defined above (whole hand and pincer) are observed
+      in the video
+
+    Possible labels are: [whole hand, pincer, multiple].
+    Answer with only the label.
+
+evaluation:
+  metrics:
+  - accuracy
+
