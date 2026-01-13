@@ -99,20 +99,16 @@ class Ovis2VLM(BaseVLM):
             return
 
         torch_dtype = _dtype_from_str(self.precision)
-        print("run automodelforcausallmfrompretrained")
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_path,
             torch_dtype=torch_dtype,
             trust_remote_code=self.trust_remote_code,
         )
-        print("automodel okey")
 
         if self.device.startswith("cuda") and torch.cuda.is_available():
-            print("cuda")
             self.model = self.model.to(self.device)
         else:
             self.device = "cpu"
-            print("cpu")
             self.model = self.model.to("cpu")
 
         self.model.eval()
