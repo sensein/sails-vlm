@@ -1,0 +1,89 @@
+experiment:
+  name: all_annotations_3_ovis2
+  seed: 42
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/all_annotations_3/ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Gesture_type
+
+task:
+  type: description
+
+
+prompt:
+  message: |
+    You are rating visibility and video quality for a child in a home video. Watch the full clip carefully (rewatch as needed). Follow these rules:
+    - Do not guess; only code what you can see.
+    - Dropdown fields are SINGLE choice from the allowed set.
+    - Likert fields MUST be an integer 1–10.
+    - Return ONLY valid JSON (no extra text).
+
+    OUTPUT JSON SCHEMA (fill every key):
+    {
+      "Body_Parts_Visible": <single_choice>,
+      "Angle_of_Body": <single_choice>,
+      "Video_Quality_Child_Face_Visibility": <int_1_to_10>,
+      "Video_Quality_Child_Body_Visibility": <int_1_to_10>,
+      "Video_Quality_Child_Hand_Visibility": <int_1_to_10>,
+      "Video_Quality_Lighting": <int_1_to_10>,
+      "Video_Quality_Resolution": <int_1_to_10>,
+      "Video_Quality_Motion": <int_1_to_10>
+    }
+
+    ALLOWED VALUES (options dictionary):
+
+    1) Body_Parts_Visible (dropdown; single choice)
+    - "upper"  (arms, chest, neck, head)
+    - "lower"  (hips, legs, feet)
+    - "both"   (all or most)
+
+    2) Angle_of_Body (dropdown; single choice)
+    - "front"    (front side of body; whole face, both shoulders, etc.)
+    - "profile"  (half/quarter of face; partial body)
+    - "back"     (back of head; no face; backside of body)
+    - "variable" (multiple angles throughout)
+
+    Likert scales (integers 1–10) come directly from the manual.
+
+    3) Video_Quality_Child_Face_Visibility (1–10)
+    {1:"not_visible_at_all",2:"only_visible_few_seconds",3:"visible_few_times_not_consistent",4:"visible_multiple_times_not_consistent",
+    5:"visible_about_half_in_out",6:"visible_more_than_half_in_out",7:"visible_throughout_obstructed_multiple_times",
+    8:"visible_consistently_obstructed_few_times",9:"visible_almost_entire_clip_1_2_obstructions",10:"fully_visible_throughout_no_obstructions"}
+
+    4) Video_Quality_Child_Body_Visibility (1–10)
+    (same anchors as Face Visibility)
+    {1:"not_visible_at_all",2:"only_visible_few_seconds",3:"visible_few_times_not_consistent",4:"visible_multiple_times_not_consistent",
+    5:"visible_about_half_in_out",6:"visible_more_than_half_in_out",7:"visible_throughout_obstructed_multiple_times",
+    8:"visible_consistently_obstructed_few_times",9:"visible_almost_entire_clip_1_2_obstructions",10:"fully_visible_throughout_no_obstructions"}
+
+    5) Video_Quality_Child_Hand_Visibility (1–10)
+    {1:"hands_not_visible_at_all",2:"hands_only_visible_few_seconds",3:"hands_visible_few_times_not_consistent",4:"hands_visible_multiple_times_not_consistent",
+    5:"hands_visible_about_half_in_out",6:"both_hands_visible_more_than_half",7:"both_hands_visible_throughout_obstructed_multiple_times",
+    8:"both_hands_visible_throughout_obstructed_few_times",9:"both_hands_visible_almost_entire_clip_1_2_obstructions",10:"both_hands_fully_visible_throughout"}
+
+    6) Video_Quality_Lighting (1–10)
+    {1:"no_lighting_subjects_not_visible",2:"very_dim_not_able_see_much",3:"dim_hard_see_details",4:"good_but_dim_hard_make_out_features",
+    5:"dim_features_detectable_about_half",6:"good_dims_in_out",7:"good_few_points_dim",8:"good_some_points_dimmer_harder_details",
+    9:"bright_all_parts_visible_minus_few",10:"excellent_all_parts_fully_visible_throughout"}
+
+    7) Video_Quality_Resolution (1–10)
+    {1:"entire_video_pixelated_distorted_undefinable",2:"mostly_pixelated_1_2_clear_moments",3:"mostly_pixelated_few_actions_definable_unclear",
+    4:"more_pixelated_than_clear",5:"pixelated_but_defined_half_clip",6:"more_clear_than_pixelated",
+    7:"repeated_pixelation_impacts_definition_mostly_clear",8:"mostly_clear_few_pixelated_moments",9:"one_two_pixelation_moments_still_definable",
+    10:"sharp_clear_easily_defined_throughout"}
+
+    8) Video_Quality_Motion (1–10)
+    {1:"constant_motion_never_static",2:"constant_motion_1_2_static_moments",3:"few_static_instances_regular_motion",4:"more_motion_than_static",
+    5:"equal_motion_and_static",6:"more_static_than_motion",7:"few_motion_instances_otherwise_static",8:"one_two_motion_instances_static_majority",
+    9:"static_majority_handheld",10:"no_motion_static_not_handheld"}

@@ -17,7 +17,7 @@ data:
   video_path_column: BidsProcessed
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/activity_ovis2
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/activity/ovis2
   save_predictions: true
 
 task:

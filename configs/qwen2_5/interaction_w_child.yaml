@@ -9,7 +9,7 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/interaction_w_child/ovis2
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/interaction_w_child/qwen25
   save_predictions: true
 
 data:

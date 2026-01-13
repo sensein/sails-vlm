@@ -1,5 +1,5 @@
 experiment:
-  name: response_to_name_ovis2
+  name: response_to_name_qwen25
   seed: 42
 
 model:
@@ -9,7 +9,7 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/response_to_name/ovis2/clips
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/response_to_name/qwen25/clips
   save_predictions: true
 
 data:

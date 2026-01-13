@@ -9,7 +9,7 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/gestures_ovis2
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/gestures/ovis2
   save_predictions: true
 
 data:
@@ -20,8 +20,8 @@ data:
 task:
   type: classification
   labels:
-  - "yes"
-  - "no"
+  - yes
+  - no
 
 prompt:
   message: |
