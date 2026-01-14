@@ -16,20 +16,36 @@ data:
   video_path_column: BidsProcessed
   ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
   label_column: Gestures
+  drop_missing_labels: true
 
 task:
   type: classification
   labels:
-  - "yes"
-  - "no"
+    - "yes"
+    - "no"
 
 prompt:
   message: |
     You are a video understanding model.
-    Given the following video, Indicate whether the child engages in a motion or motions that signal(s) or attempt(s) to signal nonverbal communication.
-    Possible labels are:[yes,no].
+    
+    Given the following video, indicate whether the child engages in a motion or motions that signal(s) or attempt(s) to signal nonverbal communication.
+    
+    Examples of gestures include:
+    - Reaching
+    - Pointing
+    - Waving
+    - Giving or showing objects
+    - Head nodding or head shaking
+    - Clapping
+    - Sign language
+    
+    Rate "yes" if the child engages in any gesture.
+    Rate "no" if the child does not engage in any gesture.
+    
+    Possible labels are: [yes, no].
+    
     Answer with only the label.
 
 evaluation:
   metrics:
-  - accuracy
+    - accuracy

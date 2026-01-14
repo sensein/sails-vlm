@@ -1,0 +1,46 @@
+experiment:
+  name: num_adults_ovis2
+  seed: 42
+  description: >
+    Counting task: count the total number of adults (appearing 18+) present
+    in the foreground of the video.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/num_adults_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: "#_adults"
+  drop_missing_labels: true
+
+task:
+  type: counting
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, count the total number of adults (appearing 18+)
+    present in the foreground of the video.
+
+    The adults should appear larger and be a focal point of the video.
+    Do not count adults who are filming and speaking to the child (off-camera).
+
+    Example: If one adult is in the video reading a book to the child, answer "1".
+
+    Answer with only a single number (e.g., 0, 1, 2, 3, etc.).
+
+evaluation:
+  metrics:
+  - mae
+  - rmse
+  - exact_match
+  - off_by_one
+

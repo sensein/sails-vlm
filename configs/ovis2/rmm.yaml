@@ -1,0 +1,47 @@
+experiment:
+  name: rmm_ovis2
+  seed: 42
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/rmm_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: RMM
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+    - "yes"
+    - "no"
+
+prompt:
+  message: |
+    You are a video understanding model.
+    
+    Given the following video, indicate the occurrence or non-occurrence of any repetitive motor movement (RMM) performed by the child.
+    
+    A repetitive motor movement occurs more than once in succession.
+    
+    Examples:
+    - Child repeatedly flaps hands/arms up and down – answer "yes"
+    - Child rocks back and forth repeatedly – answer "yes"
+    - Child does not demonstrate repeated movements – answer "no"
+    
+    Possible labels are: [yes, no].
+    
+    Answer with only the label.
+
+evaluation:
+  metrics:
+    - accuracy
+

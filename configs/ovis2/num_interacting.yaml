@@ -1,0 +1,52 @@
+experiment:
+  name: num_interacting_ovis2
+  seed: 42
+  description: >
+    Counting task: count how many people are interacting with the target child
+    in the video.
+
+model:
+  name: ovis2
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/num_interacting_ovis2
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: "#_people_interacting"
+  drop_missing_labels: true
+
+task:
+  type: counting
+
+prompt:
+  message: |
+    You are a video understanding model.
+    Given the following video, count how many people are interacting with the
+    target child.
+
+    Guidelines:
+    - Count people who are directly engaged with or communicating with the child
+    - Be specific for counts 1-4
+    - If more than 4 people are interacting, answer "5"
+    - If no one is interacting with the child (child playing alone), answer "0"
+
+    Examples:
+    - Child playing alone: answer "0"
+    - Child playing with another child or adult who is commenting: answer "1"
+    - Large group singing happy birthday to the child: answer "5"
+
+    Answer with only a single number (0, 1, 2, 3, 4, or 5).
+
+evaluation:
+  metrics:
+  - mae
+  - rmse
+  - exact_match
+  - off_by_one
+
