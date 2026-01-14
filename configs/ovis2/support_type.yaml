@@ -13,7 +13,7 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/support_type_ovis2
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/support_type/ovis2
   save_predictions: true
 
 data:
@@ -29,7 +29,7 @@ task:
   - physical
   - both
   - other
-  - "no"
+  - no
 
 prompt:
   message: |
@@ -52,5 +52,3 @@ prompt:
 evaluation:
   metrics:
   - accuracy
-
-

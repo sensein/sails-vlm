@@ -1,0 +1,68 @@
+experiment:
+  name: gesture_type_ovis2
+  seed: 42
+
+model:
+  name: qwen2_5
+  device: cuda
+  precision: bf16
+  max_frames: 16
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/gesture_type/qwen25
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Gesture_type
+
+task:
+  type: classification
+  labels:
+  - reach
+  - show
+  - give
+  - point
+  - take
+  - head shake
+  - head nod
+  - wave
+  - clap
+  - sign
+  - multiple
+  - NaN
+
+prompt:
+  message: |
+    Identify the single best label for the child’s non-verbal communication gesture in the video.
+    Labels (choose from exactly these):
+
+    - Reach: Child extends one or both arms toward an object, person, or location
+    - Show: Child extends one or both arms while holding object(s) toward another person
+    - Point: Child isolates finger(s) while directing toward an object, person, or location (may touch or not)
+    - Take: Child accepts or grabs object(s) from another person
+    - Head shake: Child moves head horizontally side-to-side (≥1 full shake: left and right)
+    - Head nod: Child moves head vertically up-and-down (≥1 full nod: down and up)
+    - Wave: Child moves one hand horizontally or vertically repeatedly, directed at a person/camera
+    - Clap: Child brings both hands together so palms touch (once or repeatedly)
+    - Sign: Child uses American Sign Language or a clear approximation to communicate
+    - Multiple: Two or more of the above gestures are clearly present at different times in the clip
+    - N/A: None of the above is clearly observed OR the relevant body parts are not visible enough to tell
+
+    Decision rules (use these to avoid confusion)
+
+    1. If finger(s) are clearly isolated, prefer Point over Reach.
+    2. If the child is holding an object outward toward someone, prefer Show (not Reach).
+    3. If the child is receiving/grabbing an object from another person, prefer Take.
+    4. If ≥2 distinct labels occur in the clip and both are clearly visible, choose Multiple as top1.
+    5. If the gesture is partially occluded / too blurry / too short to be confident, choose N/A as top1.
+
+    Output (STRICT)
+
+    Output exactly one label and nothing else, chosing from [reach,show,give,point,take,head shake,head nod,wave,clap,sign,multiple,NaN].
+
+evaluation:
+  metrics:
+  - accuracy
+  - top2_accuracy

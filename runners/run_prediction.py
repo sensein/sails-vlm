@@ -42,7 +42,6 @@ def main(config_path: str) -> None:
 
     exp_name = cfg["experiment"]["name"]
     task_type = str(cfg["task"]["type"]).lower().strip()
-
     # ---------------------------
     # Output dir (add run tag)
     # ---------------------------
@@ -74,9 +73,10 @@ def main(config_path: str) -> None:
     # Load model
     # ---------------------------
     model = load_model(cfg["model"])
+    print("loading model :", model)
     if hasattr(model, "load"):
         model.load()
-
+    print("model loaded.")
     # ---------------------------
     # Task setup
     # ---------------------------
@@ -95,11 +95,7 @@ def main(config_path: str) -> None:
     # ---------------------------
     # Optionally drop rows with missing ground-truth labels
     # ---------------------------
-    drop_missing_labels = bool(
-        cfg.get("data", {}).get(
-            "drop_missing_labels", False
-        )
-    )
+    drop_missing_labels = bool(cfg.get("data", {}).get("drop_missing_labels", False))
     dropped_missing_labels = 0
     if drop_missing_labels:
         before = len(df)
@@ -117,17 +113,21 @@ def main(config_path: str) -> None:
     debug_rows: List[Dict[str, Any]] = []
 
     y_true: List[str] = []
-    y_pred: List[str] = []
-
-    # ---------------------------
-    # Output Run Information (Task, Labels, Number of Videos, Number of Videos with Missing Labels, etc.)
-    # ---------------------------
+    y_pred_top1: List[str] = []
+    y_pred_top2raw: List[str] = []
 
     print(f"Experiment: {exp_name}")
     print(f"Task: {task_type}")
     print(f"Labels: {allowed_labels}")
-    print(f"Number of Samples with Ground-Truth Labels (non-NaN): {len(df[df[label_col].notna()])}")
-    print(f"Number of Samples with Missing Ground-Truth Labels (NaN): {dropped_missing_labels if drop_missing_labels else len(df[df[label_col].isna()])}")
+    print(
+        "Number of Samples with Ground-Truth Labels (non-NaN):"
+        f" {len(df[df[label_col].notna()])}"
+    )
+    n_missing = (
+        dropped_missing_labels if drop_missing_labels else df[label_col].isna().sum()
+    )
+
+    print(f"Number of Samples with Missing Ground-Truth Labels (NaN): {n_missing}")
     print(f"Missing Ground-Truth Labels Dropped?: {drop_missing_labels}")
 
     # ---------------------------
@@ -170,8 +170,10 @@ def main(config_path: str) -> None:
             continue
 
         try:
-            raw = model.predict(str(video_path), prompt)
+            raw = model.predict(str(video_path), prompt, allowed_labels)
+            raw_top1 = str(raw).split("|", 1)[0]
         except Exception as e:
+            print(e)
             raw = ""
             predict_errors += 1
             debug_rows.append(
@@ -187,8 +189,9 @@ def main(config_path: str) -> None:
             continue
 
         if task_type == "classification":
+            y_pred_top2raw.append(str(raw))
             pred_label, dbg = validate_classification_output(
-                raw_output=str(raw),
+                raw_output=str(raw_top1),
                 allowed_labels=allowed_labels,
                 invalid_label=INVALID_LABEL,
             )
@@ -212,8 +215,7 @@ def main(config_path: str) -> None:
             )
 
             y_true.append(str(gt))
-            y_pred.append(str(pred_label))
-
+            y_pred_top1.append(str(pred_label))
         elif task_type == "description":
             pred_text = normalize_space(str(raw))
             preds_rows.append(
@@ -246,10 +248,12 @@ def main(config_path: str) -> None:
     if task_type == "classification":
         metrics = evaluate_classification(
             y_true=y_true,
-            y_pred=y_pred,
+            y_pred=y_pred_top1,
+            y_pred_top2=y_pred_top2raw,
             labels=allowed_labels,
             metrics=metrics_cfg,
             invalid_label=INVALID_LABEL,
+            binary=False,
         )
     elif task_type == "description":
         metrics = evaluate_description(
