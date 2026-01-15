@@ -7,17 +7,21 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import yaml
 from tqdm.auto import tqdm
 from vlm_baseline.evaluation.metrics import (
     evaluate_classification,
+    evaluate_counting,
     evaluate_description,
 )
 from vlm_baseline.models import load_model
-from vlm_baseline.postprocessing.validation import validate_classification_output
+from vlm_baseline.postprocessing.validation import (
+    validate_classification_output,
+    validate_counting_output,
+)
 
 INVALID_LABEL = "INVALID"
 
@@ -42,6 +46,15 @@ def main(config_path: str) -> None:
 
     exp_name = cfg["experiment"]["name"]
     task_type = str(cfg["task"]["type"]).lower().strip()
+
+    # Force unbuffered output for immediate visibility in SLURM logs
+    import sys
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+
+    print(f"Starting experiment: {exp_name}", flush=True)
+    print(f"Task type: {task_type}", flush=True)
+
     # ---------------------------
     # Output dir (add run tag)
     # ---------------------------
@@ -49,12 +62,15 @@ def main(config_path: str) -> None:
     out_root = Path(cfg["output"]["save_dir"])
     out_dir = out_root / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Output directory: {out_dir}", flush=True)
 
     # ---------------------------
     # Load annotation CSV
     # ---------------------------
+    print("Loading ground truth CSV...", flush=True)
     gt_file = cfg["data"]["ground_truth_csv"]
     df = pd.read_csv(gt_file)
+    print(f"   Loaded {len(df)} rows from {gt_file}", flush=True)
 
     video_col = cfg["data"]["video_path_column"]
     label_col = cfg["data"].get("label_column")
@@ -72,15 +88,16 @@ def main(config_path: str) -> None:
     # ---------------------------
     # Load model
     # ---------------------------
+    print(f"Loading model: {cfg['model'].get('name', 'unknown')}...", flush=True)
     model = load_model(cfg["model"])
     print("loading model :", model)
     if hasattr(model, "load"):
         model.load()
-    print("model loaded.")
+    print("Model loaded successfully", flush=True)
+
     # ---------------------------
     # Task setup
     # ---------------------------
-    task_type = cfg["task"]["type"]
     metrics_cfg = cfg.get("evaluation", {}).get("metrics", [])
 
     if video_col is None or video_col not in df.columns:
@@ -102,19 +119,44 @@ def main(config_path: str) -> None:
         df = df[df[label_col].notna()].copy()
         dropped_missing_labels = before - len(df)
 
+    # ---------------------------
+    # Optionally limit number of samples for testing
+    # ---------------------------
+    max_samples = cfg.get("data", {}).get("max_samples", None)
+    if max_samples is not None and max_samples > 0:
+        df = df.head(int(max_samples)).copy()
+        print(f"Limiting to first {max_samples} samples for testing")
+
     allowed_labels: List[str] = []
     if task_type == "classification":
         allowed_labels = list(cfg["task"]["labels"])
         df[label_col] = df[label_col].astype(object).where(df[label_col].notna(), "NaN")
+    elif task_type == "counting":
+        # For counting tasks, convert ground truth to integers
+        # Handle values like "10+", "5+" by extracting the numeric part
+        def parse_count_label(val):
+            if pd.isna(val):
+                return None
+            val_str = str(val).strip()
+            match = re.match(r"(\d+)", val_str)
+            if match:
+                return int(match.group(1))
+            return None
+        df[label_col] = df[label_col].apply(parse_count_label)
     else:
         df[label_col] = df[label_col].astype(object).where(df[label_col].notna(), "")
 
     preds_rows: List[Dict[str, Any]] = []
     debug_rows: List[Dict[str, Any]] = []
 
+    # For classification/description tasks
     y_true: List[str] = []
     y_pred_top1: List[str] = []
     y_pred_top2raw: List[str] = []
+
+    # For counting tasks
+    y_true_counts: List[int] = []
+    y_pred_counts: List[Optional[int]] = []
 
     print(f"Experiment: {exp_name}")
     print(f"Task: {task_type}")
@@ -173,7 +215,9 @@ def main(config_path: str) -> None:
             raw = model.predict(str(video_path), prompt, allowed_labels)
             raw_top1 = str(raw).split("|", 1)[0]
         except Exception as e:
-            print(e)
+            import traceback
+            print(f"Error during prediction: {e}")
+            print(traceback.format_exc())
             raw = ""
             predict_errors += 1
             debug_rows.append(
@@ -216,6 +260,33 @@ def main(config_path: str) -> None:
 
             y_true.append(str(gt))
             y_pred_top1.append(str(pred_label))
+
+        elif task_type == "counting":
+            pred_count, dbg = validate_counting_output(raw_output=str(raw))
+
+            if pred_count is None:
+                invalid_preds += 1
+
+            dbg.update({"index": int(i), "video_path": str(video_path)})
+            debug_rows.append(dbg)
+
+            # Convert ground truth to int (may be float from pandas)
+            gt_int = int(gt) if pd.notna(gt) else None
+
+            preds_rows.append(
+                {
+                    "index": int(i),
+                    "video_path": str(video_path),
+                    "ground_truth": gt_int,
+                    "raw_prediction": raw,
+                    "prediction": pred_count,
+                }
+            )
+
+            if gt_int is not None:
+                y_true_counts.append(gt_int)
+                y_pred_counts.append(pred_count)
+
         elif task_type == "description":
             pred_text = normalize_space(str(raw))
             preds_rows.append(
@@ -229,8 +300,8 @@ def main(config_path: str) -> None:
             )
         else:
             raise ValueError(
-                f"Unknown task.type '{task_type}'. Expected 'classification' "
-                "or 'description'."
+                f"Unknown task.type '{task_type}'. Expected 'classification', "
+                "'counting', or 'description'."
             )
 
         pbar.set_postfix(
@@ -254,6 +325,12 @@ def main(config_path: str) -> None:
             metrics=metrics_cfg,
             invalid_label=INVALID_LABEL,
             binary=False,
+        )
+    elif task_type == "counting":
+        metrics = evaluate_counting(
+            y_true=y_true_counts,
+            y_pred=y_pred_counts,
+            metrics=metrics_cfg,
         )
     elif task_type == "description":
         metrics = evaluate_description(
@@ -295,7 +372,7 @@ def main(config_path: str) -> None:
 
     debug_df.to_csv(out_dir / "debug.csv", index=False)
 
-    print(f"✅ Experiment completed successfully. Saved to: {out_dir}")
+    print(f"\nExperiment completed successfully. Saved to: {out_dir}", flush=True)
 
 
 if __name__ == "__main__":
