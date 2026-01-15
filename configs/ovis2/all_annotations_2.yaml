@@ -100,10 +100,10 @@ prompt:
     Rules:
     - If Locomotion="no" => Locomotion_type MUST be "n_a"
     Allowed:
-    - "crawling"
-    - "cruising"
-    - "walking"
-    - "running"
+    - "crawl"
+    - "cruise"
+    - "walk"
+    - "run"
     - "multiple"
     - "vehicle"
     - "n_a"
