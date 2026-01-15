@@ -116,7 +116,7 @@ prompt:
     - If Supports="yes": choose one of:
       - "verbal"
       - "physical"
-      - "verbal_and_physical"
+      - "both"
       - "other"
     - If Supports="no": "n/a"
 

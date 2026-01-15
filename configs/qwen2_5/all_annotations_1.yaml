@@ -9,7 +9,7 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/all_annotations_1/qwen25
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/all_annotations_1/qwen25
   save_predictions: true
 
 data:
@@ -116,7 +116,7 @@ prompt:
     - If Supports="yes": choose one of:
       - "verbal"
       - "physical"
-      - "verbal_and_physical"
+      - "both"
       - "other"
     - If Supports="no": "n/a"
 

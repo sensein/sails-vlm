@@ -14,7 +14,7 @@ output:
 
 data:
   video_path_column: BidsProcessed
-  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/test.csv
   label_column: Gesture_type
 
 task:
