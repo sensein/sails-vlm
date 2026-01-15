@@ -1,0 +1,125 @@
+experiment:
+  name: all_annotations_2_qwen3
+  seed: 42
+
+model:
+  name: qwen3
+  hf_model_id: Qwen/Qwen3-VL-8B-Thinking
+  device: cuda
+  frames_per_sample: 8
+  samples_per_clip: 1
+  max_new_tokens: 512
+  load_in_4bit: true
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/all_annotations_2/qwen3
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Gesture_type
+
+task:
+  type: description
+
+prompt:
+  message: |
+    You are annotating child behaviors in a home video. Watch the full clip carefully (rewatch as needed). Follow these rules:
+    - Do not guess; only code what you can see/hear.
+    - All dropdown fields must be a SINGLE choice from the allowed set (no multi-select; use "multiple" where available).
+    - Return ONLY valid JSON (no extra text).
+
+    OUTPUT JSON SCHEMA (fill every key):
+    {
+      "Gestures": <single_choice>,
+      "Gesture_type": <single_choice>,
+      "Vocalizations": <single_choice>,
+      "RMM": <single_choice>,
+      "RMM_type": <single_choice>,
+      "Response_to_name": <single_choice>,
+      "Locomotion": <single_choice>,
+      "Locomotion_type": <single_choice>,
+      "Grasping": <single_choice>,
+      "Grasp_type": <single_choice>
+    }
+
+    ALLOWED VALUES (options dictionary):
+
+    1) Gestures (dropdown; single choice)
+    - "yes"
+    - "no"
+
+    2) Gesture_type (dropdown; single choice)
+    Rules:
+    - If Gestures="no" => Gesture_type MUST be "n_a"
+    Allowed:
+    - "reach"
+    - "show"
+    - "point"
+    - "take"
+    - "head_shake"
+    - "head_nod"
+    - "wave"
+    - "clap"
+    - "sign"
+    - "multiple"
+    - "n_a"
+
+    3) Vocalizations (dropdown; single choice)
+    - "yes"
+    - "no"
+
+    4) RMM (repetitive motor movement) (dropdown; single choice)
+    - "yes"
+    - "no"
+
+    5) RMM_type (dropdown; single choice)
+    Rules:
+    - If RMM="no" => RMM_type MUST be "n_a"
+    Allowed:
+    - "hands_flapping"
+    - "one_hand_flap"
+    - "jumping"
+    - "spinning"
+    - "rocking"
+    - "other"
+    - "multiple"
+    - "n_a"
+
+    6) Response_to_name (dropdown; single choice)
+    - "yes"
+    - "no"
+    - "inconsistent"
+    - "n_a"   (if no overt attempt/name not called)
+
+    7) Locomotion (dropdown; single choice)
+    - "yes"       (any independent movement place-to-place)
+    - "no"        (stationary)
+    - "assisted"  (help from another person)
+
+    8) Locomotion_type (dropdown; single choice)
+    Rules:
+    - If Locomotion="no" => Locomotion_type MUST be "n_a"
+    Allowed:
+    - "crawling"
+    - "cruising"
+    - "walking"
+    - "running"
+    - "multiple"
+    - "vehicle"
+    - "n_a"
+
+    9) Grasping (dropdown; single choice)
+    - "yes"
+    - "no"
+    (Note: do not count grasping furniture.)
+
+    10) Grasp_type (dropdown; single choice)
+    Rules:
+    - If Grasping="no" => Grasp_type MUST be "n_a"
+    Allowed:
+    - "whole_hand"
+    - "pincer_grasp"
+    - "variable"
+    - "n_a"

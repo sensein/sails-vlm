@@ -1,0 +1,128 @@
+experiment:
+  name: all_annotations_1_qwen3
+  seed: 42
+
+model:
+  name: qwen3
+  hf_model_id: Qwen/Qwen3-VL-8B-Thinking
+  device: cuda
+  frames_per_sample: 8
+  samples_per_clip: 1
+  max_new_tokens: 512
+  load_in_4bit: true
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/all_annotations_1/qwen3
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  label_column: Gesture_type
+
+task:
+  type: description
+
+prompt:
+  message: |
+    You are annotating a home video of a child. Watch the full clip carefully (rewatch as needed). Follow these rules:
+    - Do not guess; only code what you can see.
+    - All dropdown fields must be a SINGLE choice from the allowed set.
+    - For free-text fields, write a short phrase (max ~12 words). If not applicable, use "n/a". If truly not determinable, use "unknown" ONLY where allowed.
+    - Return ONLY valid JSON (no extra text).
+
+    OUTPUT JSON SCHEMA (fill every key):
+    {
+      "Context": <single_choice>,
+      "Location": <single_choice>,
+      "Activity": <free_text>,
+      "Child_of_interest_clear": <single_choice>,
+      "Num_adults_foreground": <single_choice>,
+      "Num_children_foreground": <single_choice>,
+      "Num_people_background": <single_choice>,
+      "Interaction_with_child": <single_choice>,
+      "Num_people_interacting_with_child": <single_choice>,
+      "Child_constrained": <single_choice>,
+      "Constraint_type": <free_text_or_n/a>,
+      "Supports": <single_choice>,
+      "Support_type": <single_choice>,
+      "Example_support_type": <free_text_or_n/a>
+    }
+
+    ALLOWED VALUES (options dictionary):
+    1) Context (dropdown; single choice)
+    - "general_social_communication_interaction"
+    - "toy_play"
+    - "motor_play"
+    - "book_share"
+    - "social_routine"
+    - "daily_routine"
+    - "special_occasion"
+    - "other"
+
+    2) Location (dropdown; single choice)
+    - "inside_private"
+    - "outside_private"
+    - "inside_public"
+    - "outside_public"
+    - "unknown"
+
+    3) Activity (fill-in text)
+    - short description of what is happening (e.g., "adult reads book to child", "child running and laughing")
+    - if cannot tell: "unknown"
+
+    4) Child_of_interest_clear (dropdown; single choice) }
+    - "yes"
+    - "no"
+
+    5) Num_adults_foreground (dropdown-like count; single choice)
+    Definition: adults (18+) in foreground/focal point; do NOT count the person filming and speaking to the child.
+    Allowed:
+    - "0","1","2","3","4","5+"
+
+    6) Num_children_foreground (dropdown-like count; single choice)
+    Definition: children in foreground/focal point; ALWAYS at least 1 (target child).
+    Allowed:
+    - "1","2","3","4","5+"
+
+    7) Num_people_background (dropdown-like count; single choice)
+    Definition: people in background, smaller/not focal; at least 1/2 body visible.
+    Allowed:
+    - "0","1","2","3","4","5+"
+
+    8) Interaction_with_child (dropdown; single choice)
+    Definition: any social interaction/attempt toward the target child by filmer or someone else.
+    - "yes"
+    - "no"
+
+    9) Num_people_interacting_with_child (dropdown; single choice)
+    Definition: how many people interact with the target child; if >4 use 5+; if none, n/a.
+    Allowed:
+    - "n/a","1","2","3","4","5+"
+
+    10) Child_constrained (dropdown; single choice)
+    Definition: child cannot move freely; "partial" if changes during video.
+    - "yes"
+    - "no"
+    - "partial"
+
+    11) Constraint_type (fill-in text)
+    - If Child_constrained is "yes" or "partial": short phrase (e.g., "highchair", "car seat", "being held")
+    - Else: "n/a"
+
+    12) Supports (dropdown; single choice)
+    Definition: verbal/physical interaction that assists the child; not just interaction unless assistive.
+    - "yes"
+    - "no"
+
+    13) Support_type (dropdown; single choice)
+    - If Supports="yes": choose one of:
+      - "verbal"
+      - "physical"
+      - "verbal_and_physical"
+      - "other"
+    - If Supports="no": "n/a"
+
+    14) Example_support_type (fill-in text)
+    - If Supports="yes": short quote/description (e.g., "look at me", "good job!", "pushing swing")
+    - If Supports="no": "n/a"
