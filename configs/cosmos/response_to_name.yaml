@@ -1,0 +1,64 @@
+experiment:
+  name: response_to_name_cosmos_reason2
+  seed: 42
+
+model:
+  name: cosmos
+  hf_model_id: nvidia/Cosmos-Reason2-8B
+  device: cuda
+  frames_per_sample: 8
+  samples_per_clip: 1
+  max_new_tokens: 1024
+  load_in_4bit: true
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/response_to_name/cosmos/clips
+  save_predictions: true
+
+data:
+  video_path_column: BidsProcessed
+  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/response_to_name_df.csv
+  label_column: Response_to_name
+
+task:
+  type: classification
+  labels:
+  - yes
+  - no
+
+prompt:
+  message: |
+    You are a video understanding model specialized in behavioral coding.
+
+    Task:
+    You will be given a short video clip in which the child’s name (or nickname) is called at least once.
+    Output a single label indicating whether the child reacts to the name call.
+
+    Labels (output exactly one):
+    - yes: the child shows a clear, time-locked reaction to the name call.
+    - no: the child shows no discernible reaction to the name call.
+
+    Definition of "reaction" (count as YES if any of the following occurs within a short window after the name call):
+    - The child orients toward the caller: turns head/face/eyes toward the speaker or source of the voice.
+    - The child interrupts ongoing behavior: pauses, stills, stops an action, or shifts attention consistent with noticing the call.
+    - The child produces a socially directed response: vocalization, smile, gesture, or acknowledgment toward the caller.
+
+    Timing rule:
+    - Consider reactions that occur within ~0–2 seconds after the name is called as most reliable.
+    - Allow up to ~3 seconds only if the child is engaged in an action that plausibly delays reorientation (e.g., manipulating an object), and the subsequent shift is clearly directed to the caller.
+
+    Exclusions (do NOT count as a reaction; keep NO):
+    - Random movements not directed toward the caller (looking around, self-stimulation, continuing play unchanged).
+    - Head/eye movement driven by camera motion, another person moving in frame, or a salient object unrelated to the caller.
+    - Looking toward a sound/object that is not clearly the caller (e.g., TV, toy, door) unless the caller is there.
+    - A reaction that starts before the name call finishes (anticipatory movement) unless it is clearly triggered by the call.
+
+    Decision rule:
+    - If there is at least one clear, time-locked reaction meeting the definition, output "yes".
+    - If all observed behavior is ambiguous or not time-locked to the call, output "no".
+
+    Output format:
+    Answer with only one word: yes or no.
+
+evaluation:
+  metrics:
+  - accuracy
