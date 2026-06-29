@@ -27,8 +27,11 @@ INVALID_LABEL = "INVALID"
 
 
 def now_tag() -> str:
-    """Generate a timestamp tag for the current run."""
-    return datetime.now().strftime("%Y%m%d_%H%M")
+    """Generate a timestamp tag for the current run (with random suffix to avoid collisions)."""
+    import random
+    import string
+    suffix = "".join(random.choices(string.ascii_lowercase, k=4))
+    return datetime.now().strftime("%Y%m%d_%H%M") + f"_{suffix}"
 
 
 def normalize_space(s: str) -> str:
@@ -75,6 +78,19 @@ def main(config_path: str) -> None:
     video_col = cfg["data"]["video_path_column"]
     label_col = cfg["data"].get("label_column")
 
+    # If video_dir + video_id_column are set, construct video_path from them
+    video_dir = cfg["data"].get("video_dir")
+    video_id_col = cfg["data"].get("video_id_column")
+    if video_dir and video_id_col:
+        if video_id_col not in df.columns:
+            raise ValueError(
+                f"CSV missing video_id_column '{video_id_col}'. Columns: {list(df.columns)}"
+            )
+        df[video_col] = df[video_id_col].astype(str).apply(
+            lambda x: str(Path(video_dir) / f"{x}.mp4")
+        )
+        print(f"   Constructed video paths from {video_id_col} + {video_dir}", flush=True)
+
     if video_col not in df.columns:
         raise ValueError(
             f"CSV missing video_path_column '{video_col}'. Columns: {list(df.columns)}"
@@ -118,6 +134,17 @@ def main(config_path: str) -> None:
         before = len(df)
         df = df[df[label_col].notna()].copy()
         dropped_missing_labels = before - len(df)
+
+    # ---------------------------
+    # Optionally filter rows by column value
+    # ---------------------------
+    filters = cfg.get("data", {}).get("filters", {})
+    for col, allowed_values in filters.items():
+        if col not in df.columns:
+            raise ValueError(f"Filter column '{col}' not found in CSV. Columns: {list(df.columns)}")
+        before = len(df)
+        df = df[df[col].isin(allowed_values)].copy()
+        print(f"Filter '{col}' in {allowed_values}: {before} -> {len(df)} rows")
 
     # ---------------------------
     # Optionally limit number of samples for testing
@@ -325,6 +352,7 @@ def main(config_path: str) -> None:
             metrics=metrics_cfg,
             invalid_label=INVALID_LABEL,
             binary=False,
+            output_dir=str(out_dir),
         )
     elif task_type == "counting":
         metrics = evaluate_counting(

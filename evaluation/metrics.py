@@ -6,16 +6,24 @@ annotation tasks in the VLM baseline framework.
 
 from __future__ import annotations
 
+import logging
 import math
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score
-from sentence_transformers import SentenceTransformer
-from rouge import Rouge
-from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
-from scipy.spatial.distance import cosine
+from sklearn.metrics import (
+    accuracy_score,
+    cohen_kappa_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+
+# Lazy imports for description-only dependencies (sentence_transformers, rouge, nltk, scipy)
+# These are imported inside the functions that use them.
 
 
 def evaluate_classification(
@@ -26,8 +34,15 @@ def evaluate_classification(
     binary: bool,
     y_pred_top2: Optional[List[str]] = None,
     invalid_label: str = "INVALID",
+    output_dir: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Evaluate classification predictions."""
+    """Evaluate classification predictions.
+
+    Supported metrics (pass any combination in *metrics*):
+        accuracy, top2_accuracy, f1_macro, precision_macro, recall_macro,
+        per_class_metrics, cohen_kappa, confusion_matrix.
+    """
+    logger = logging.getLogger(__name__)
     out: Dict[str, Any] = {}
     out["n"] = len(y_true)
     out["invalid_rate"] = sum(1 for p in y_pred if p == invalid_label) / max(
@@ -58,8 +73,77 @@ def evaluate_classification(
         out["f1_macro"] = float(
             f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)
         )
-    
+
+    if "precision_macro" in metrics:
+        out["precision_macro"] = float(
+            precision_score(
+                y_true, y_pred, labels=labels, average="macro", zero_division=0
+            )
+        )
+
+    if "recall_macro" in metrics:
+        out["recall_macro"] = float(
+            recall_score(
+                y_true, y_pred, labels=labels, average="macro", zero_division=0
+            )
+        )
+
+    if "per_class_metrics" in metrics:
+        per_class_p = precision_score(
+            y_true, y_pred, labels=labels, average=None, zero_division=0
+        )
+        per_class_r = recall_score(
+            y_true, y_pred, labels=labels, average=None, zero_division=0
+        )
+        per_class_f = f1_score(
+            y_true, y_pred, labels=labels, average=None, zero_division=0
+        )
+        out["per_class"] = {
+            label: {
+                "precision": float(per_class_p[i]),
+                "recall": float(per_class_r[i]),
+                "f1": float(per_class_f[i]),
+            }
+            for i, label in enumerate(labels)
+        }
+
+    if "cohen_kappa" in metrics:
+        out["cohen_kappa"] = float(cohen_kappa_score(y_true, y_pred))
+
+    if "confusion_matrix" in metrics:
+        cm = confusion_matrix(y_true, y_pred, labels=labels)
+        out["confusion_matrix"] = cm.tolist()
+
+        if output_dir is not None:
+            try:
+                _save_confusion_matrix(
+                    cm, labels, Path(output_dir) / "confusion_matrix.png"
+                )
+            except Exception as exc:
+                logger.warning("Could not save confusion matrix plot: %s", exc)
+
     return out
+
+
+def _save_confusion_matrix(
+    cm: np.ndarray, labels: List[str], path: Path
+) -> None:
+    """Save a confusion-matrix heatmap to *path*."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(max(6, len(labels) * 1.5), max(5, len(labels) * 1.2)))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                xticklabels=labels, yticklabels=labels)
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.title("Confusion Matrix")
+    plt.tight_layout()
+    plt.savefig(path, dpi=150)
+    plt.close()
 
 
 def evaluate_description(
@@ -138,6 +222,7 @@ def evaluate_description(
     
     # Lexical metrics
     if any(m in metrics for m in ["bleu", "rouge1", "rouge2", "rougeL", "word_overlap"]):
+        from rouge import Rouge
         rouge = Rouge()
         bleu_scores = []
         rouge_scores = []
@@ -202,14 +287,15 @@ def _compute_word_overlap(pred: str, truth: str) -> float:
 
 def _compute_bleu(pred: str, truth: str) -> float:
     """Computes BLEU score with smoothing."""
+    from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
     reference = [truth.split()]
     candidate = pred.split()
     smoothing = SmoothingFunction().method1
-    
+
     try:
         return sentence_bleu(
-            reference, 
-            candidate, 
+            reference,
+            candidate,
             smoothing_function=smoothing
         )
     except:
@@ -235,9 +321,12 @@ def _compute_semantic_similarity(
     embedding_model_name: str,
 ) -> Dict[str, float]:
     """Computes semantic similarity metrics using embeddings."""
+    from sentence_transformers import SentenceTransformer
+    from scipy.spatial.distance import cosine
+
     # Load model
     embedding_model = SentenceTransformer(embedding_model_name)
-    
+
     # Generate embeddings
     pred_embeddings = embedding_model.encode(
         predictions,
@@ -249,7 +338,7 @@ def _compute_semantic_similarity(
         show_progress_bar=False,
         convert_to_numpy=True
     )
-    
+
     # Compute metrics
     cosine_sims = [
         1 - cosine(pred_emb, truth_emb)
