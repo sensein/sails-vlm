@@ -71,16 +71,23 @@ export PYTHONPATH="${PWD}:${PYTHONPATH}"
 python -m runners.run_prediction configs/qwen3/rmm.yaml
 ```
 
-Or use the provided SLURM scripts:
+Or use the provided SLURM scripts. **Submit from the repo root** — log paths
+(`logs/<job>_%j.out`) are relative to the submission directory:
 
 ```bash
 CONFIG=configs/qwen3/rmm.yaml sbatch scripts/qwen3_rmm.sh
 ```
 
-Override the conda environment or partition at submission time:
+`CONFIG` (which config to run) and `CONDA_ENV` (which conda env to activate,
+default `qwen`) are read from the shell environment at runtime, so they can be
+set on the command line as shown.
+
+The partition and log paths live in `#SBATCH` directives, which sbatch does
+**not** shell-expand. To change them, edit the script or override on the
+`sbatch` command line (these take precedence over the directives):
 
 ```bash
-CONDA_ENV=myenv SLURM_PARTITION=gpu sbatch scripts/qwen3_rmm.sh
+sbatch -p gpu -o ~/logs/qwen3_%j.out scripts/qwen3_rmm.sh
 ```
 
 
