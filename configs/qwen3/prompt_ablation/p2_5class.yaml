@@ -1,0 +1,59 @@
+experiment:
+  name: rmm_type_prompt_p2_5class
+
+model:
+  name: qwen3_video
+  hf_model_id: Qwen/Qwen3-VL-30B-A3B-Instruct
+  device: cuda
+  max_new_tokens: 64
+  do_sample: true
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 20
+  local_files_only: true
+  # max_pixels not set — use qwen_vl_utils default
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/rmm_type/prompt_ablation/p2_5class
+  save_predictions: true
+
+data:
+  ground_truth_csv: /orcd/data/satra/001/users/brukew/actreg/dataprep/splits/cv_splits/fold_0_val.csv
+  video_id_column: segment_id
+  video_dir: /orcd/data/satra/002/projects/SAILS/rmm/classification_clips/canonical_clips
+  video_path_column: video_path
+  label_column: rmm_type
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+    - "hands flapping"
+    - "one hand flap"
+    - "rocking"
+    - "spinning"
+    - "jumping"
+
+prompt:
+  message: |
+    You are analyzing a child's repetitive motor behavior. Watch the video carefully and classify the movement.
+
+    Categories:
+    - hands flapping: both hands flap repeatedly at the wrists (vertical or horizontal)
+    - one hand flap: only one hand flaps repeatedly at the wrist (vertical or horizontal)
+    - rocking: body rocks front-to-back or side-to-side repeatedly
+    - spinning: body turns in circles repeatedly
+    - jumping: body bounces up repeatedly, knees bend, feet near or off the floor
+
+    Reply with only: `RMM: <category>`
+
+evaluation:
+  metrics:
+    - accuracy
+    - top2_accuracy
+    - f1_macro
+    - precision_macro
+    - recall_macro
+    - per_class_metrics
+    - cohen_kappa
+    - confusion_matrix

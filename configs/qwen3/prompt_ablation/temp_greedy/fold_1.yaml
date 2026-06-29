@@ -1,0 +1,43 @@
+experiment:
+  name: rmm_type_temp_greedy_f1
+model:
+  name: qwen3_video
+  hf_model_id: Qwen/Qwen3-VL-30B-A3B-Instruct
+  device: cuda
+  max_new_tokens: 2048
+  do_sample: false
+  local_files_only: true
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/rmm_type/prompt_ablation/temp_greedy/fold_1
+  save_predictions: true
+data:
+  ground_truth_csv: /orcd/data/satra/001/users/brukew/actreg/dataprep/splits/cv_splits/fold_1_val.csv
+  video_id_column: segment_id
+  video_dir: /orcd/data/satra/002/projects/SAILS/rmm/classification_clips/canonical_clips
+  video_path_column: video_path
+  label_column: rmm_type
+  drop_missing_labels: true
+task:
+  type: classification
+  labels:
+  - hands flapping
+  - rocking
+  - spinning
+  - jumping
+prompt:
+  message: "    You are analyzing a child's repetitive motor behavior. Watch the video\
+    \ carefully and classify the movement.\n\n    Categories:\n    - hands flapping:\
+    \ one or both hands flap repeatedly at the wrists, either vertically or horizontally\n\
+    \    - rocking: body rocks front-to-back or side-to-side repeatedly\n    - spinning:\
+    \ body turns in circles repeatedly\n    - jumping: body bounces up repeatedly,\
+    \ knees bend, feet near or off the floor\n\n    Reply with only: `RMM: <category>`\n"
+evaluation:
+  metrics:
+  - accuracy
+  - top2_accuracy
+  - f1_macro
+  - precision_macro
+  - recall_macro
+  - per_class_metrics
+  - cohen_kappa
+  - confusion_matrix
