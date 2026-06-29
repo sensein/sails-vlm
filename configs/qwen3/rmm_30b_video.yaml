@@ -1,0 +1,55 @@
+experiment:
+  name: rmm_type_qwen3_vl_30b_video
+
+model:
+  name: qwen3_video
+  hf_model_id: Qwen/Qwen3-VL-30B-A3B-Instruct
+  device: cuda
+  max_new_tokens: 64
+  do_sample: true
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 20
+  local_files_only: true
+  # max_pixels not set — use qwen_vl_utils default (VIDEO_TOTAL_PIXELS / nframes per frame)
+
+output:
+  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/rmm_type/qwen3_30b_video
+  save_predictions: true
+
+data:
+  ground_truth_csv: /orcd/data/satra/001/users/brukew/actreg/dataprep/splits/cv_splits/fold_0_val.csv
+  video_id_column: segment_id
+  video_dir: /orcd/data/satra/002/projects/SAILS/rmm/classification_clips/canonical_clips
+  video_path_column: video_path
+  label_column: rmm_type
+  drop_missing_labels: true
+
+task:
+  type: classification
+  labels:
+    - "hands flapping"
+    - "rocking"
+    - "spinning"
+    - "jumping"
+
+prompt:
+  message: |
+    Identify the repetitive motor movement (RMM) shown in the video.
+    Choose exactly one option from the list and reply as `RMM: <option>` with no extra words.
+
+    - hands flapping: repetitive movement of the hands at the wrists either vertically or horizontally.
+    - rocking: repetitive front-to-back or side-to-side movement of the body.
+    - spinning: repetitive turning of the body in a circular motion.
+    - jumping: repetitive bouncing of the body involving bending the knees and feet leaving or nearly leaving the floor.
+
+evaluation:
+  metrics:
+    - accuracy
+    - top2_accuracy
+    - f1_macro
+    - precision_macro
+    - recall_macro
+    - per_class_metrics
+    - cohen_kappa
+    - confusion_matrix
