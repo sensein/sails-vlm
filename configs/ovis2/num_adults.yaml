@@ -12,12 +12,12 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pre2annot_evaluation/num_adults_ovis2
+  save_dir: /orcd/data/satra/002/projects/SAILS/pre2annot_evaluation/num_adults_ovis2
   save_predictions: true
 
 data:
   video_path_column: BidsProcessed
-  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/anotated_processed.csv
+  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/BIDS_data/anotated_processed.csv
   label_column: "#_adults"
   drop_missing_labels: true
 

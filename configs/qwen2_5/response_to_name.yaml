@@ -9,12 +9,12 @@ model:
   max_frames: 16
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/response_to_name/qwen25/clips
+  save_dir: /orcd/data/satra/002/projects/SAILS/pred2annot_evaluation/response_to_name/qwen25/clips
   save_predictions: true
 
 data:
   video_path_column: BidsProcessed
-  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/response_to_name_df.csv
+  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/response_to_name_df.csv
   label_column: Response_to_name
 
 task:

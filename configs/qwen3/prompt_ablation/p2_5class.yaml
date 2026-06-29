@@ -14,11 +14,11 @@ model:
   # max_pixels not set — use qwen_vl_utils default
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/rmm_type/prompt_ablation/p2_5class
+  save_dir: /orcd/data/satra/002/projects/SAILS/pred2annot_evaluation/rmm_type/prompt_ablation/p2_5class
   save_predictions: true
 
 data:
-  ground_truth_csv: /orcd/data/satra/001/users/brukew/actreg/dataprep/splits/cv_splits/fold_0_val.csv
+  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/rmm/cv_splits/fold_0_val.csv
   video_id_column: segment_id
   video_dir: /orcd/data/satra/002/projects/SAILS/rmm/classification_clips/canonical_clips
   video_path_column: video_path

@@ -12,12 +12,12 @@ model:
   max_frames: 16
 
 data:
-  ground_truth_csv: /orcd/scratch/bcs/001/sensein/sails/BIDS_data/test.csv
+  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/BIDS_data/test.csv
   label_column: Activity
   video_path_column: BidsProcessed
 
 output:
-  save_dir: /orcd/scratch/bcs/001/sensein/sails/pred2annot_evaluation/activity/ovis2
+  save_dir: /orcd/data/satra/002/projects/SAILS/pred2annot_evaluation/activity/ovis2
   save_predictions: true
 
 task:
