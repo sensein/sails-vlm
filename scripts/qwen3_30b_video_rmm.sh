@@ -22,7 +22,8 @@ conda activate "${CONDA_ENV:-qwen}"
 
 set -eo pipefail
 
-REPO_DIR=$(cd "$(dirname "$0")/.." && pwd)
+# Path to your sails-vlm checkout. Edit this (or export REPO_DIR) before running.
+REPO_DIR="${REPO_DIR:-/orcd/data/satra/001/users/brukew/sails-vlm}"
 cd "${REPO_DIR}"
 mkdir -p logs
 export PYTHONPATH="${PWD}:${PYTHONPATH}"
