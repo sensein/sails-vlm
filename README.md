@@ -21,12 +21,66 @@ This `vlm_baseline` folder provides a baseline framework for automatic annotatio
 - `evaluation/` computes metrics comparing predictions vs. ground truth
 - `runners/` orchestrates the entire pipeline (config loading, data iteration, output saving, evaluation)
 
-## How to Run
+## Setup
 
-Build a srun session with a gpu, then from the repo root, run:
+### 1. Create conda environment
 
 ```bash
-poetry run python vlm_baseline/runners/run_prediction.py vlm_baseline/configs/ovis2/response_to_name.yaml
+conda env create -f environment.yml
+conda activate qwen
+```
+
+### 2. Set up module imports
+
+The runner uses `from vlm_baseline.models import ...` which requires a self-referential symlink at the repo root:
+
+```bash
+ln -s . vlm_baseline  # only needed once; already present if cloned from main
+```
+
+### 3. Download model weights
+
+Models are loaded with `local_files_only: true`, so weights must be in the HuggingFace cache before running. Set `HF_HOME` if you want to use a shared cache location:
+
+```bash
+export HF_HOME=/path/to/shared/huggingface/cache
+```
+
+Then download the model you need (requires internet, do this outside the compute node):
+
+```bash
+huggingface-cli download Qwen/Qwen3-VL-8B-Instruct
+huggingface-cli download nvidia/Cosmos-Reason2-8B
+```
+
+### 4. Update config paths
+
+Config YAMLs contain paths specific to the original cluster environment (`/orcd/...`). Before running, update these fields in your config:
+
+- `data.ground_truth_csv` — path to your validation CSV
+- `data.video_dir` — path to the directory containing video clips
+- `output.save_dir` — where to write predictions and metrics
+
+## How to Run
+
+Build a srun session with a GPU, then from the repo root:
+
+```bash
+conda activate qwen
+export PYTHONPATH="${PWD}:${PYTHONPATH}"
+python -m runners.run_prediction configs/qwen3/rmm.yaml
+```
+
+Or use the provided SLURM scripts:
+
+```bash
+CONFIG=configs/qwen3/rmm.yaml sbatch scripts/qwen3_rmm.sh
+```
+
+Override the conda environment or partition at submission time:
+
+```bash
+CONDA_ENV=myenv SLURM_PARTITION=gpu sbatch scripts/qwen3_rmm.sh
 ```
 
 
@@ -135,7 +189,7 @@ model:
 Run your existing runner with the new config:
 
 ```bash
-poetry run python vlm_baseline/runners/run_prediction.py vlm_baseline/configs/<new_model>/your_config.yaml
+python -m runners.run_prediction configs/<new_model>/your_config.yaml
 ```
 
 **Note**: Downstream postprocessing automatically determines whether it's a classification or free-text task based on the configuration.
