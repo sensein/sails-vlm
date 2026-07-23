@@ -12,13 +12,13 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import yaml
 from tqdm.auto import tqdm
-from vlm_baseline.evaluation.metrics import (
+from sails_vlm.evaluation.metrics import (
     evaluate_classification,
     evaluate_counting,
     evaluate_description,
 )
-from vlm_baseline.models import load_model
-from vlm_baseline.postprocessing.validation import (
+from sails_vlm.models import load_model
+from sails_vlm.postprocessing.validation import (
     validate_classification_output,
     validate_counting_output,
 )
