@@ -13,12 +13,12 @@ model:
   use_flash_attn: false
 
 output:
-  save_dir: /orcd/data/satra/002/projects/SAILS/pred2annot_evaluation/all_annotations_3/internvl3_5
+  save_dir: ${SAILS_DATA_ROOT}/pred2annot_evaluation/all_annotations_3/internvl3_5
   save_predictions: true
 
 data:
   video_path_column: BidsProcessed
-  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/BIDS_data/anotated_processed.csv
+  ground_truth_csv: ${SAILS_DATA_ROOT}/BIDS_data/anotated_processed.csv
   label_column: Gesture_type
 
 task:

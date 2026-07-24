@@ -44,8 +44,10 @@ def main(config_path: str) -> None:
     # ---------------------------
     # Load config
     # ---------------------------
+    from sails_vlm.paths import interpolate
+
     with open(config_path, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+        cfg = interpolate(yaml.safe_load(f))
 
     exp_name = cfg["experiment"]["name"]
     task_type = str(cfg["task"]["type"]).lower().strip()

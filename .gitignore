@@ -11,3 +11,4 @@ logs/*.err
 
 # Env
 .env
+sails-vlm.yaml
