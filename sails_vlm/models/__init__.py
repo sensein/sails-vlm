@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import importlib
 from typing import Any, Dict
 
 from .base_vlm import BaseVLM, VLMRawOutput
-from .cosmos import CosmosReason2VLM
-from .cosmos_video import CosmosVideo
-from .ovis2 import Ovis2VLM
-from .qwen2_5 import Qwen25VLM
-from .qwen3 import Qwen3
-from .qwen3_video import Qwen3Video
+
+# name -> (submodule, class). Adapters import lazily so that installing only
+# one family's extra is enough to use that family.
+REGISTRY: Dict[str, tuple[str, str]] = {
+    "ovis2": ("ovis2", "Ovis2VLM"),
+    "qwen2_5": ("qwen2_5", "Qwen25VLM"),
+    "cosmos": ("cosmos", "CosmosReason2VLM"),
+    "cosmos_video": ("cosmos_video", "CosmosVideo"),
+    "qwen3": ("qwen3", "Qwen3"),
+    "qwen3_video": ("qwen3_video", "Qwen3Video"),
+    "internvl": ("internvl", "InternVL"),
+}
 
 
 def load_model(model_config: Dict[str, Any]) -> BaseVLM:
@@ -19,19 +26,13 @@ def load_model(model_config: Dict[str, Any]) -> BaseVLM:
     Expects cfg["model"] dict with at least: {"name": "..."}.
     """
     name = str(model_config.get("name", "")).lower().strip()
+    if name not in REGISTRY:
+        raise ValueError(
+            f"Unknown model name: {name!r}. Available: {sorted(REGISTRY)}"
+        )
+    submodule, class_name = REGISTRY[name]
+    module = importlib.import_module(f".{submodule}", __package__)
+    return getattr(module, class_name)(model_config)
 
-    if name == "ovis2":
-        return Ovis2VLM(model_config)
-    if name == "qwen2_5":
-        return Qwen25VLM(model_config)
-    if name == "cosmos":
-        return CosmosReason2VLM(model_config)
-    if name == "qwen3":
-        return Qwen3(model_config)
-    if name == "qwen3_video":
-        return Qwen3Video(model_config)
-    if name == "cosmos_video":
-        return CosmosVideo(model_config)
-    raise ValueError(
-        f"Unknown model name: {name!r}. Available: ['ovis2', 'qwen2_5', 'cosmos', 'cosmos_video', 'qwen3', 'qwen3_video']"
-    )
+
+__all__ = ["BaseVLM", "VLMRawOutput", "REGISTRY", "load_model"]
