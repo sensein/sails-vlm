@@ -22,7 +22,19 @@ def test_unknown_model_error_lists_available():
 
 
 def test_registry_is_lazy():
-    """Importing sails_vlm.models must not import any adapter module."""
+    """Importing sails_vlm.models must not import any adapter module.
+
+    Runs in a fresh interpreter so other tests' legitimate adapter imports
+    (e.g. the contract tests) can't pollute the check.
+    """
+    import subprocess
     import sys
-    for mod in ("sails_vlm.models.qwen3", "sails_vlm.models.internvl"):
-        assert mod not in sys.modules
+
+    code = (
+        "import sys; import sails_vlm.models; "
+        "leaked = [m for m in sys.modules "
+        "if m.startswith('sails_vlm.models.') and m != 'sails_vlm.models.base_vlm']; "
+        "assert not leaked, f'eagerly imported: {leaked}'"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=180)
+    assert result.returncode == 0, result.stderr
