@@ -17,20 +17,20 @@
 
 echo "Job started on $(hostname) at $(date)"
 
-source ~/.bashrc || true
-conda activate "${CONDA_ENV:-qwen}"
-
 set -eo pipefail
 
-# Path to your sails-vlm checkout. Edit this (or export REPO_DIR) before running.
-REPO_DIR="${REPO_DIR:-/orcd/data/satra/001/users/brukew/sails-vlm}"
+# REPO_DIR must point at your sails-vlm checkout (no default: personal paths
+# are banned by the SAILS repo schema).
+if [ -z "${REPO_DIR:-}" ]; then
+  echo "ERROR: export REPO_DIR=/path/to/your/sails-vlm clone before sbatch." >&2
+  exit 1
+fi
 cd "${REPO_DIR}"
 mkdir -p logs
-export PYTHONPATH="${PWD}:${PYTHONPATH}"
 
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 
 CONFIG=${CONFIG:-configs/qwen3/rmm_30b.yaml}
 
-python -m runners.run_prediction "${CONFIG}" "$@"
+uv run sails-vlm-predict "${CONFIG}" "$@"

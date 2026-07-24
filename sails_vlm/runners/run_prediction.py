@@ -405,9 +405,18 @@ def main(config_path: str) -> None:
     print(f"\nExperiment completed successfully. Saved to: {out_dir}", flush=True)
 
 
-if __name__ == "__main__":
-    import sys
+def cli() -> None:
+    """Console entry point."""
+    import argparse
 
-    if len(sys.argv) < 2:
-        raise SystemExit("Usage: python -m runners.run_experiment path/to/config.yaml")
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        prog="sails-vlm-predict",
+        description="Run VLM annotation prediction from a config YAML.",
+    )
+    parser.add_argument("config", help="Path to experiment config YAML")
+    args = parser.parse_args()
+    main(args.config)
+
+
+if __name__ == "__main__":
+    cli()
