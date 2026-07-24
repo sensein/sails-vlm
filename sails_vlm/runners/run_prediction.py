@@ -26,6 +26,24 @@ from sails_vlm.postprocessing.validation import (
 INVALID_LABEL = "INVALID"
 
 
+def apply_seed(seed) -> None:
+    """Seed all RNGs if a seed is configured; no-op otherwise.
+
+    Note: with do_sample=true, seeding makes runs repeatable on identical
+    hardware/software but is not a cross-platform determinism guarantee.
+    """
+    if seed is None:
+        return
+    import random
+
+    import numpy as np
+    import torch
+
+    random.seed(int(seed))
+    np.random.seed(int(seed))
+    torch.manual_seed(int(seed))
+
+
 def now_tag() -> str:
     """Generate a timestamp tag for the current run (with random suffix to avoid collisions)."""
     import random
@@ -48,6 +66,8 @@ def main(config_path: str) -> None:
 
     with open(config_path, "r", encoding="utf-8") as f:
         cfg = interpolate(yaml.safe_load(f))
+
+    apply_seed(cfg.get("experiment", {}).get("seed"))
 
     exp_name = cfg["experiment"]["name"]
     task_type = str(cfg["task"]["type"]).lower().strip()

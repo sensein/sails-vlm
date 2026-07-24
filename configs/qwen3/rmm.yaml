@@ -1,6 +1,7 @@
 experiment:
   name: rmm_type_qwen3_vl_instruct
-  # no fixed seed — each run samples differently
+  # seed: 1234   # uncomment for repeatable sampling on identical hardware;
+  # left unset by default — sampling (do_sample: true) varies across runs.
 
 model:
   name: qwen3
