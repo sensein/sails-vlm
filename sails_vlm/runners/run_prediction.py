@@ -48,7 +48,7 @@ def now_tag() -> str:
     """Generate a timestamp tag for the current run (with random suffix to avoid collisions)."""
     import random
     import string
-    suffix = "".join(random.choices(string.ascii_lowercase, k=4))
+    suffix = "".join(random.SystemRandom().choices(string.ascii_lowercase, k=4))
     return datetime.now().strftime("%Y%m%d_%H%M") + f"_{suffix}"
 
 

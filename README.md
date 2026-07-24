@@ -49,8 +49,18 @@ huggingface-cli download Qwen/Qwen3-VL-8B-Instruct
 huggingface-cli download nvidia/Cosmos-Reason2-8B
 ```
 
+Description-task semantic metrics also need the embedding model cached, since
+evaluation scripts export `HF_HUB_OFFLINE=1` and will fail to fetch it on
+demand:
+
+```bash
+huggingface-cli download sentence-transformers/all-MiniLM-L6-v2
+```
+
 Config YAMLs use `${SAILS_DATA_ROOT}` for data/output paths — set the
-environment variable (or `sails-vlm.yaml`, see above) before running.
+environment variable (or `sails-vlm.yaml`, see above) before running. The
+`./sails-vlm.yaml` fallback is resolved relative to the current working
+directory, so run from the repo root, or use the environment variable instead.
 
 ## Run
 
@@ -59,8 +69,9 @@ uv run sails-vlm-predict configs/qwen3/rmm.yaml
 ```
 
 Runs are **not deterministic by default** (`do_sample: true`); set
-`experiment.seed` in the config for repeatable sampling on identical
-hardware. Model weights must be pre-cached (`local_files_only: true`).
+`experiment.seed` in the config for typically repeatable sampling on identical
+hardware (GPU kernels are not guaranteed deterministic). Model weights must be
+pre-cached (`local_files_only: true`).
 
 Build a srun session with a GPU, then from the repo root, or use the provided
 SLURM scripts. **Submit from the repo root** — log paths (`logs/<job>_%j.out`)

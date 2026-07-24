@@ -16,6 +16,8 @@ dependencies = [
     "tqdm>=4.67",
     "pillow>=11.0",
     "huggingface-hub>=1.0",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
 ]
 
 [project.optional-dependencies]

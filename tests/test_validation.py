@@ -64,7 +64,7 @@ class TestValidateCounting:
         assert value is None
 
     def test_leading_no_means_zero(self):
-        """Strategy 4: a leading 'no <noun>' reads as count 0 ("no adults").
+        """Strategy 2: a leading 'no <noun>' reads as count 0 ("no adults").
         Side effect (characterized, flagged for review): "no idea" also -> 0."""
         assert validate_counting_output("no adults")[0] == 0
         assert validate_counting_output("no idea")[0] == 0
