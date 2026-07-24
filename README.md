@@ -2,7 +2,7 @@
 
 ## Overview
 
-This `vlm_baseline` folder provides a baseline framework for automatic annotation of videos using Video-Language Models (VLMs). The primary goal is to automate the manual annotation process currently performed on SAILS videos.
+The `sails_vlm` package provides a baseline framework for automatic annotation of videos using Video-Language Models (VLMs). The primary goal is to automate the manual annotation process currently performed on SAILS videos.
 
 ### Key Concepts
 
@@ -16,71 +16,64 @@ This `vlm_baseline` folder provides a baseline framework for automatic annotatio
 
 **Key Architecture Principle:**
 
-- `models/` handles model interaction - if you want to try performances of a new VLM, you'll need to implement it here
-- `postprocessing/` converts raw VLM output into task-specific prediction format
-- `evaluation/` computes metrics comparing predictions vs. ground truth
-- `runners/` orchestrates the entire pipeline (config loading, data iteration, output saving, evaluation)
+- `sails_vlm/models/` handles model interaction - if you want to try performances of a new VLM, you'll need to implement it here (see `docs/adding-a-model.md`)
+- `sails_vlm/postprocessing/` converts raw VLM output into task-specific prediction format
+- `sails_vlm/evaluation/` computes metrics comparing predictions vs. ground truth
+- `sails_vlm/runners/` orchestrates the entire pipeline (config loading, data iteration, output saving, evaluation)
 
 ## Setup
 
-### 1. Create conda environment
-
 ```bash
-conda env create -f environment.yml
-conda activate qwen
+git clone <repo-url> && cd sails-vlm
+uv sync                          # core (no model families)
+uv sync --extra qwen             # + the family you plan to run
+export SAILS_DATA_ROOT=/orcd/data/satra/002/projects/SAILS   # or copy sails-vlm.example.yaml -> sails-vlm.yaml
 ```
 
-### 2. Set up module imports
+| extra | models | pins |
+|---|---|---|
+| `qwen` | qwen2_5, qwen3, qwen3_video | transformers (exact pin), qwen-vl-utils |
+| `cosmos` | cosmos, cosmos_video | transformers (exact pin) |
+| `ovis2` | ovis2 | transformers (exact pin) |
+| `internvl` | internvl | transformers (exact pin) |
+| `text-metrics` | free-text eval (BLEU/ROUGE/semantic) | rouge, nltk, sentence-transformers, scipy |
 
-The runner uses `from vlm_baseline.models import ...` which requires a self-referential symlink at the repo root:
-
-```bash
-ln -s . vlm_baseline  # only needed once; already present if cloned from main
-```
-
-### 3. Download model weights
-
-Models are loaded with `local_files_only: true`, so weights must be in the HuggingFace cache before running. Set `HF_HOME` if you want to use a shared cache location:
+Model weights must be pre-cached in the HuggingFace cache before running
+(`local_files_only: true`). Set `HF_HOME` if you want to use a shared cache
+location, then download the model you need (requires internet, do this
+outside the compute node):
 
 ```bash
 export HF_HOME=/path/to/shared/huggingface/cache
-```
-
-Then download the model you need (requires internet, do this outside the compute node):
-
-```bash
 huggingface-cli download Qwen/Qwen3-VL-8B-Instruct
 huggingface-cli download nvidia/Cosmos-Reason2-8B
 ```
 
-### 4. Update config paths
+Config YAMLs use `${SAILS_DATA_ROOT}` for data/output paths — set the
+environment variable (or `sails-vlm.yaml`, see above) before running.
 
-Config YAMLs contain paths specific to the original cluster environment (`/orcd/...`). Before running, update these fields in your config:
-
-- `data.ground_truth_csv` — path to your validation CSV
-- `data.video_dir` — path to the directory containing video clips
-- `output.save_dir` — where to write predictions and metrics
-
-## How to Run
-
-Build a srun session with a GPU, then from the repo root:
+## Run
 
 ```bash
-conda activate qwen
-export PYTHONPATH="${PWD}:${PYTHONPATH}"
-python -m runners.run_prediction configs/qwen3/rmm.yaml
+uv run sails-vlm-predict configs/qwen3/rmm.yaml
 ```
 
-Or use the provided SLURM scripts. **Submit from the repo root** — log paths
-(`logs/<job>_%j.out`) are relative to the submission directory:
+Runs are **not deterministic by default** (`do_sample: true`); set
+`experiment.seed` in the config for repeatable sampling on identical
+hardware. Model weights must be pre-cached (`local_files_only: true`).
+
+Build a srun session with a GPU, then from the repo root, or use the provided
+SLURM scripts. **Submit from the repo root** — log paths (`logs/<job>_%j.out`)
+are relative to the submission directory:
 
 ```bash
 CONFIG=configs/qwen3/rmm.yaml sbatch scripts/qwen3_rmm.sh
 ```
 
-`CONFIG` (which config to run) and `CONDA_ENV` (which conda env to activate,
-default `qwen`) are read from the shell environment at runtime, so they can be
-set on the command line as shown.
+`CONFIG` (which config to run) is read from the shell environment at runtime,
+so it can be set on the command line as shown. The scripts invoke
+`uv run sails-vlm-predict` internally, so no environment activation step is
+needed.
 
 The partition and log paths live in `#SBATCH` directives, which sbatch does
 **not** shell-expand. To change them, edit the script or override on the
@@ -124,18 +117,18 @@ data:
 When enabled, rows with missing ground-truth labels are removed **before any VLM
 inference** (those videos are not processed and do not appear in predictions/eval).
 
-## Models (models/)
+## Models (sails_vlm/models/)
 
 This folder contains thin wrappers around VLM backends (Ovis2, Qwen2.5, …).
 It loads the model, runs inference on a video + prompt, returns raw generated text
 
-## Postprocessing (postprocessing/)
+## Postprocessing (sails_vlm/postprocessing/)
 
 Postprocessing converts raw model output into the prediction type expected by the task. It then validates the postprocessed output
 
-## Evaluation (evaluation/)
+## Evaluation (sails_vlm/evaluation/)
 
-Evaluation metrics depend on `task.type`. For free text tasks, we haven't any metrics implemented yet.
+Evaluation metrics depend on `task.type`. For free text tasks, see the `text-metrics` extra (BLEU/ROUGE/semantic similarity).
 
 ### Classification Evaluation
 
@@ -149,54 +142,6 @@ Common metrics include:
 
 ### How to add a new model
 
-## How to Add a New Model
-
-To integrate a new VLM into the baseline framework, follow these steps:
-
-### 1. Create Model Wrapper
-
-Create a new file `models/<new_model>.py` with a class that inherits from `BaseVLM`:
-
-```python
-class NewModelVLM(BaseVLM):
-    def load(self):
-        # Load weights/processor, set device, eval mode
-        pass
-
-    def generate(self, video_path, prompt, video_cfg=None, gen_cfg=None):
-        # Implement inference logic
-        # Return VLMRawOutput
-        pass
-
-    # Usually no need to override predict()
-```
-
-### 2. Register the Model
-
-Update `models/__init__.py`:
-
-- Import your new class
-- Add a case in the `load_model()` function for your model's `config["name"]`
-
-### 3. Create Configuration
-
-Add a config YAML file under `configs/<new_model>/...yaml` with at least the annotation description, prompt etc,... and for the model configuration:
-
-```yaml
-model:
-  name: "your_model_name"
-  model_path: "HF_repo_id"  # or local path
-  device: "cuda"
-  precision: "bf16"
-
-```
-
-### 4. Test the Integration
-
-Run your existing runner with the new config:
-
-```bash
-python -m runners.run_prediction configs/<new_model>/your_config.yaml
-```
-
-**Note**: Downstream postprocessing automatically determines whether it's a classification or free-text task based on the configuration.
+See `docs/adding-a-model.md` for the full onboarding checklist (adapter,
+registry entry, dependency extra, config — and the contract tests that
+verify all four are wired up consistently).
