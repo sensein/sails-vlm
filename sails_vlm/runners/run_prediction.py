@@ -12,13 +12,13 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import yaml
 from tqdm.auto import tqdm
-from vlm_baseline.evaluation.metrics import (
+from sails_vlm.evaluation.metrics import (
     evaluate_classification,
     evaluate_counting,
     evaluate_description,
 )
-from vlm_baseline.models import load_model
-from vlm_baseline.postprocessing.validation import (
+from sails_vlm.models import load_model
+from sails_vlm.postprocessing.validation import (
     validate_classification_output,
     validate_counting_output,
 )
@@ -26,11 +26,29 @@ from vlm_baseline.postprocessing.validation import (
 INVALID_LABEL = "INVALID"
 
 
+def apply_seed(seed) -> None:
+    """Seed all RNGs if a seed is configured; no-op otherwise.
+
+    Note: with do_sample=true, seeding makes runs repeatable on identical
+    hardware/software but is not a cross-platform determinism guarantee.
+    """
+    if seed is None:
+        return
+    import random
+
+    import numpy as np
+    import torch
+
+    random.seed(int(seed))
+    np.random.seed(int(seed))
+    torch.manual_seed(int(seed))
+
+
 def now_tag() -> str:
     """Generate a timestamp tag for the current run (with random suffix to avoid collisions)."""
     import random
     import string
-    suffix = "".join(random.choices(string.ascii_lowercase, k=4))
+    suffix = "".join(random.SystemRandom().choices(string.ascii_lowercase, k=4))
     return datetime.now().strftime("%Y%m%d_%H%M") + f"_{suffix}"
 
 
@@ -44,8 +62,12 @@ def main(config_path: str) -> None:
     # ---------------------------
     # Load config
     # ---------------------------
+    from sails_vlm.paths import interpolate
+
     with open(config_path, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+        cfg = interpolate(yaml.safe_load(f))
+
+    apply_seed(cfg.get("experiment", {}).get("seed"))
 
     exp_name = cfg["experiment"]["name"]
     task_type = str(cfg["task"]["type"]).lower().strip()
@@ -403,9 +425,18 @@ def main(config_path: str) -> None:
     print(f"\nExperiment completed successfully. Saved to: {out_dir}", flush=True)
 
 
-if __name__ == "__main__":
-    import sys
+def cli() -> None:
+    """Console entry point."""
+    import argparse
 
-    if len(sys.argv) < 2:
-        raise SystemExit("Usage: python -m runners.run_experiment path/to/config.yaml")
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        prog="sails-vlm-predict",
+        description="Run VLM annotation prediction from a config YAML.",
+    )
+    parser.add_argument("config", help="Path to experiment config YAML")
+    args = parser.parse_args()
+    main(args.config)
+
+
+if __name__ == "__main__":
+    cli()

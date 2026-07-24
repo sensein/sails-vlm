@@ -12,12 +12,12 @@ model:
   load_in_4bit: true
 
 output:
-  save_dir: /orcd/data/satra/002/projects/SAILS/pred2annot_evaluation/all_annotations_2/qwen3
+  save_dir: ${SAILS_DATA_ROOT}/pred2annot_evaluation/all_annotations_2/qwen3
   save_predictions: true
 
 data:
   video_path_column: BidsProcessed
-  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/BIDS_data/anotated_processed.csv
+  ground_truth_csv: ${SAILS_DATA_ROOT}/BIDS_data/anotated_processed.csv
   label_column: Gesture_type
 
 task:

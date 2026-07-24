@@ -1,0 +1,3 @@
+# Copy to sails-vlm.yaml (git-ignored) and set your data root, or export
+# SAILS_DATA_ROOT instead.
+data_root: /orcd/data/satra/002/projects/SAILS

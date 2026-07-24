@@ -13,13 +13,13 @@ model:
   local_files_only: true
 
 output:
-  save_dir: /orcd/data/satra/002/projects/SAILS/pred2annot_evaluation/rmm_type/prompt_ablation/p4_merged_flap/fold_0
+  save_dir: ${SAILS_DATA_ROOT}/pred2annot_evaluation/rmm_type/prompt_ablation/p4_merged_flap/fold_0
   save_predictions: true
 
 data:
-  ground_truth_csv: /orcd/data/satra/002/projects/SAILS/rmm/cv_splits/fold_0_val.csv
+  ground_truth_csv: ${SAILS_DATA_ROOT}/rmm/cv_splits/fold_0_val.csv
   video_id_column: segment_id
-  video_dir: /orcd/data/satra/002/projects/SAILS/rmm/classification_clips/canonical_clips
+  video_dir: ${SAILS_DATA_ROOT}/rmm/classification_clips/canonical_clips
   video_path_column: video_path
   label_column: rmm_type
   drop_missing_labels: true
