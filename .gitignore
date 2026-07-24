@@ -11,4 +11,6 @@ logs/*.err
 
 # Env
 .env
+.venv/
+.pytest_cache/
 sails-vlm.yaml

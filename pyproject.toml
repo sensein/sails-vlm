@@ -24,7 +24,7 @@ dependencies = [
 qwen = ["transformers==5.14.1", "qwen-vl-utils==0.0.10"]
 cosmos = ["transformers==5.14.1"]
 ovis2 = ["transformers==5.14.1"]
-internvl = ["transformers==5.14.1"]
+internvl = ["transformers==5.14.1", "bitsandbytes>=0.45"]
 text-metrics = ["rouge>=1.0", "nltk>=3.9", "sentence-transformers>=3.0", "scipy>=1.14"]
 
 [dependency-groups]

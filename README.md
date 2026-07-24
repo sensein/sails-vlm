@@ -35,7 +35,7 @@ export SAILS_DATA_ROOT=/orcd/data/satra/002/projects/SAILS   # or copy sails-vlm
 | `qwen` | qwen2_5, qwen3, qwen3_video | transformers (exact pin), qwen-vl-utils |
 | `cosmos` | cosmos, cosmos_video | transformers (exact pin) |
 | `ovis2` | ovis2 | transformers (exact pin) |
-| `internvl` | internvl | transformers (exact pin) |
+| `internvl` | internvl | transformers (exact pin), bitsandbytes (4-bit quantization — shipped configs set `load_in_4bit: true`) |
 | `text-metrics` | free-text eval (BLEU/ROUGE/semantic) | rouge, nltk, sentence-transformers, scipy |
 
 Model weights must be pre-cached in the HuggingFace cache before running

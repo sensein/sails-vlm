@@ -65,6 +65,19 @@ wheels = [
 ]
 
 [[package]]
+name = "bitsandbytes"
+version = "0.50.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "torch" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/6c/b3c2a6b05e0fb06c6258b675436b2b090192450d7f283826e6323471e270/bitsandbytes-0.50.0-py3-none-macosx_14_0_arm64.whl", hash = "sha256:c6f482df4dc18c7c150246577025de40dd0935031ea10a1e4122599a525b39bb", size = 123217, upload-time = "2026-07-24T19:48:51.724Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -873,6 +886,7 @@ cosmos = [
     { name = "transformers" },
 ]
 internvl = [
+    { name = "bitsandbytes" },
     { name = "transformers" },
 ]
 ovis2 = [
@@ -897,6 +911,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate", specifier = ">=1.10.0" },
+    { name = "bitsandbytes", marker = "extra == 'internvl'", specifier = ">=0.45" },
     { name = "decord", specifier = "==0.6.0" },
     { name = "huggingface-hub", specifier = ">=1.0" },
     { name = "matplotlib", specifier = ">=3.9" },
