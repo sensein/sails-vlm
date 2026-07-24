@@ -60,8 +60,14 @@ class TestValidateCounting:
         assert value == 2
 
     def test_unparseable_returns_none(self):
-        value, _ = validate_counting_output("no idea")
+        value, _ = validate_counting_output("unclear")
         assert value is None
+
+    def test_leading_no_means_zero(self):
+        """Strategy 4: a leading 'no <noun>' reads as count 0 ("no adults").
+        Side effect (characterized, flagged for review): "no idea" also -> 0."""
+        assert validate_counting_output("no adults")[0] == 0
+        assert validate_counting_output("no idea")[0] == 0
 
     def test_none_returns_none(self):
         assert validate_counting_output(None)[0] is None
