@@ -71,8 +71,20 @@ class TestEvaluateCounting:
 
 
 def test_evaluate_description_needs_text_extra():
-    """evaluate_description lazily imports rouge/nltk/sentence-transformers;
-    without the text-metrics extra it must raise ImportError, not crash at
-    module import time."""
-    pytest.importorskip("rouge", reason="text-metrics extra not installed")
-    from sails_vlm.evaluation.metrics import evaluate_description  # noqa: F401
+    """evaluate_description imports rouge lazily INSIDE the function, so
+    module import never raises; calling it with a lexical metric and without
+    the text-metrics extra must raise ImportError."""
+    try:
+        import rouge  # noqa: F401
+    except ImportError:
+        pass
+    else:
+        pytest.skip("text-metrics extra installed; missing-dep path not testable")
+    from sails_vlm.evaluation.metrics import evaluate_description
+
+    with pytest.raises(ImportError):
+        evaluate_description(
+            predictions=["a child waving"],
+            ground_truths=["a child waves"],
+            metrics=["rouge1"],
+        )
