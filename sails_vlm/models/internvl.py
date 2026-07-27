@@ -128,28 +128,7 @@ class InternVL(BaseVLM):
 
         except Exception as e:
             print(f"Error extracting frames with decord: {e}")
-            # Fallback to opencv
-            import cv2
-            cap = cv2.VideoCapture(video_path)
-            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            if total_frames == 0:
-                cap.release()
-                return []
-
-            indices = [int(i * total_frames / num_frames) for i in range(num_frames)]
-            indices = [min(i, total_frames - 1) for i in indices]
-
-            frames = []
-            for idx in indices:
-                cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-                ret, frame = cap.read()
-                if ret:
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frames.append(Image.fromarray(frame_rgb))
-            cap.release()
-
-            return [frames] if frames else []
+            return []
 
     def _run_one_window(self, frames: List[Image.Image], prompt: str) -> str:
         """Run inference on one frame window.

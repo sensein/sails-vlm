@@ -125,13 +125,7 @@ class Qwen3Video(BaseVLM):
             vr = VideoReader(str(p), ctx=cpu(0), num_threads=1)
             total_frames = len(vr)
         except Exception:
-            try:
-                import cv2
-                cap = cv2.VideoCapture(str(p))
-                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or None
-                cap.release()
-            except Exception:
-                pass
+            pass
 
         video_content: Dict[str, Any] = {"type": "video", "video": str(p)}
         if total_frames:
