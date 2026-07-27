@@ -144,6 +144,19 @@ Evaluation metrics depend on `task.type`. For free text tasks, see the `text-met
 ### Classification Evaluation
 
 Common metrics include:
+
+#### Headline metric: balanced accuracy
+
+SAILS annotation classes are imbalanced, so raw accuracy is inflated by the
+majority class. The headline metric for any classification result is
+`balanced_accuracy` (mathematically identical to macro-averaged recall,
+`recall_macro`) or macro-F1, always alongside per-class recall/F1 (or a
+confusion matrix) and class prevalence. `accuracy` may appear only as a
+secondary number — never alone, and never as the basis of a model
+comparison. All shipped classification configs list `balanced_accuracy`
+first, and `evaluate_classification` emits it as the first metric field in
+`results.json`.
+
 - **Accuracy** (though not always most relevant for unbalanced datasets)
 - Macro-F1 / Weighted-F1
 - Per-class precision/recall/F1
