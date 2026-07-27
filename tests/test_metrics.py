@@ -32,6 +32,33 @@ class TestEvaluateClassification:
         )
         assert results["accuracy"] == pytest.approx(0.5)
 
+    def test_balanced_accuracy_aliases_recall_macro(self):
+        y_true = ["rocking", "jumping", "spinning", "rocking"]
+        y_pred = ["rocking", "jumping", "rocking", "spinning"]
+        results = evaluate_classification(
+            y_true=y_true,
+            y_pred=y_pred,
+            labels=["rocking", "jumping", "spinning"],
+            binary=False,
+            metrics=["balanced_accuracy", "recall_macro"],
+        )
+        assert results["balanced_accuracy"] == pytest.approx(
+            results["recall_macro"]
+        )
+
+    def test_balanced_accuracy_is_first_metric_key(self):
+        """Contract (spec §10): when requested, balanced_accuracy is the first
+        metric key after the n/invalid_rate bookkeeping fields — regardless of
+        its position in the requested metrics list."""
+        results = evaluate_classification(
+            y_true=["rocking", "jumping"],
+            y_pred=["rocking", "rocking"],
+            labels=["rocking", "jumping"],
+            binary=False,
+            metrics=["accuracy", "f1_macro", "balanced_accuracy"],
+        )
+        assert list(results.keys())[:3] == ["n", "invalid_rate", "balanced_accuracy"]
+
 
 class TestEvaluateCounting:
     def test_exact_counts(self):
