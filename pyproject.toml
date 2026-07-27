@@ -2,6 +2,9 @@
 name = "sails-vlm"
 version = "0.1.0"
 description = "VLM-based automated annotation and evaluation for SAILS behavioral coding"
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: Apache Software License"]
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "torch==2.6.0",

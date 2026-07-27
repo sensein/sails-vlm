@@ -40,3 +40,14 @@ def test_bitsandbytes_where_quantization_paths_exist(project):
     extras = project["optional-dependencies"]
     for family in ("qwen", "internvl"):
         assert "bitsandbytes" in _names(extras[family]), family
+
+
+def test_license_and_readme_declared(project):
+    """Apache-2.0, matching senselab (user-approved 2026-07-27). authors is
+    deliberately absent: deferred to a follow-up issue filed at PR time."""
+    assert project.get("readme") == "README.md"
+    assert project.get("license") == {"file": "LICENSE"}
+    assert "authors" not in project
+    license_text = (PYPROJECT_PATH.parent / "LICENSE").read_text()
+    assert "Apache License" in license_text
+    assert "Copyright 2026 Sensein Lab, MIT" in license_text
