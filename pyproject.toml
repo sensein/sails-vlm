@@ -40,3 +40,23 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["sails_vlm"]
+
+# Explicit allowlist: hatchling's default sdist selection is "everything not
+# VCS-ignored", which ships any untracked directory left in the working tree.
+# Criterion for inclusion: what a consumer needs to build and run the test
+# suite from the sdist. docs/, notebooks/ and scripts/ are deliberately out.
+[tool.hatch.build.targets.sdist]
+# Leading "/" anchors each pattern to the project root. Without it these are
+# gitignore-style and match at any depth: "tests/" pulled in site-packages/
+# scipy/stats/tests/, "LICENSE" every dist-info/LICENSE, "README.md" even
+# notebooks/README.md (verified 2026-08-14: 13MB sdist, 3849 venv members).
+include = [
+    "/sails_vlm",
+    "/tests",
+    "/configs",
+    "/sails-vlm.example.yaml",
+    "/pyproject.toml",
+    "/README.md",
+    "/LICENSE",
+    "/uv.lock",
+]
