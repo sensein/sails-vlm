@@ -151,7 +151,12 @@ SAILS annotation classes are imbalanced, so raw accuracy is inflated by the
 majority class. The headline metric for any classification result is
 `balanced_accuracy` (mathematically identical to macro-averaged recall,
 `recall_macro`) or macro-F1, always alongside per-class recall/F1 (or a
-confusion matrix) and class prevalence. `accuracy` may appear only as a
+confusion matrix) and class prevalence. Note: `balanced_accuracy` is averaged
+over the *configured* label set with `zero_division=0`, so a label that never
+appears in the ground truth of a given split (e.g., a CV fold missing a class)
+counts as recall 0 — deflating the value relative to sklearn's
+`balanced_accuracy_score`, which averages only over classes present in
+`y_true`. `accuracy` may appear only as a
 secondary number — never alone, and never as the basis of a model
 comparison. All shipped classification configs list `balanced_accuracy`
 first, and `evaluate_classification` emits it as the first metric field in
