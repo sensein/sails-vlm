@@ -36,6 +36,7 @@ prompt:
     \ knees bend, feet near or off the floor\n\n    Reply with only: `RMM: <category>`\n"
 evaluation:
   metrics:
+  - balanced_accuracy
   - accuracy
   - top2_accuracy
   - f1_macro

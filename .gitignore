@@ -4,6 +4,9 @@ __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
 
+# Build artifacts
+dist/
+
 # SLURM logs (keep the dir, ignore the output files)
 logs/*.out
 logs/*.err
@@ -11,6 +14,8 @@ logs/*.err
 
 # Env
 .env
-.venv/
+# .venv* not .venv: audit envs (.venv-audit/, per the workspace convention)
+# are created in-tree, and an unignored one gets swept into the sdist.
+.venv*/
 .pytest_cache/
 sails-vlm.yaml

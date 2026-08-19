@@ -187,7 +187,7 @@ class Qwen3(BaseVLM):
         return {lab: counts.get(lab, 0) / total for lab in labels_list}
 
     # -------------------------
-    # Frame extraction (decord → opencv → moviepy)
+    # Frame extraction (decord)
     # -------------------------
     def _extract_frame_windows(
         self,
@@ -200,8 +200,6 @@ class Qwen3(BaseVLM):
             return [], {"frame_backend": None, "error": f"FileNotFound: {p}"}
 
         windows: List[List[Image.Image]] = []
-        decord_err: str = ""
-        opencv_err: str = ""
 
         # 1) decord
         try:
@@ -225,84 +223,10 @@ class Qwen3(BaseVLM):
                 "n_windows": len(windows),
             }
         except Exception as e:
-            decord_err = repr(e)
-
-        # 2) OpenCV fallback
-        try:
-            import cv2
-
-            cap = cv2.VideoCapture(str(p))
-            if not cap.isOpened():
-                return [], {
-                    "frame_backend": "opencv",
-                    "error": f"VideoCaptureNotOpened; decord_error={decord_err}",
-                }
-
-            total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-
-            if total <= 0:
-                frames_all: List[Image.Image] = []
-                while True:
-                    ok, frame = cap.read()
-                    if not ok:
-                        break
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    frames_all.append(Image.fromarray(frame))
-                cap.release()
-
-                total = len(frames_all)
-                if total <= 0:
-                    return [], {
-                        "frame_backend": "opencv",
-                        "error": f"NoFramesDecoded; decord_error={decord_err}",
-                    }
-
-                index_sets = sample_frame_indices(total, frames_per_sample, samples_per_clip)
-                windows = [[frames_all[int(i)] for i in idxs] for idxs in index_sets]
-                return windows, {
-                    "frame_backend": "opencv",
-                    "n_frames_video": total,
-                    "n_windows": len(windows),
-                    "decord_error": decord_err,
-                }
-
-            index_sets = sample_frame_indices(total, frames_per_sample, samples_per_clip)
-            for idxs in index_sets:
-                win_frames: List[Image.Image] = []
-                for idx in idxs.tolist():
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
-                    ok, frame = cap.read()
-                    if not ok:
-                        break
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    win_frames.append(Image.fromarray(frame))
-
-                if win_frames:
-                    while len(win_frames) < frames_per_sample:
-                        win_frames.append(win_frames[-1])
-                    windows.append(win_frames)
-
-            cap.release()
-
-            if not windows:
-                return [], {
-                    "frame_backend": "opencv",
-                    "error": f"NoWindowsDecoded; decord_error={decord_err}",
-                }
-
-            return windows, {
-                "frame_backend": "opencv",
-                "n_frames_video": total,
-                "n_windows": len(windows),
-                "decord_error": decord_err,
+            return [], {
+                "frame_backend": "decord",
+                "error": f"decord_failed={repr(e)}",
             }
-        except Exception as e:
-            opencv_err = repr(e)
-
-        return [], {
-            "frame_backend": None,
-            "error": f"AllBackendsFailed; decord={decord_err}; opencv={opencv_err}",
-        }
 
     def generate(
         self,
