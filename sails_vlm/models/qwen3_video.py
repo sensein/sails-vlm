@@ -120,12 +120,18 @@ class Qwen3Video(BaseVLM):
 
         # Get total frame count so the processor uses every frame in the clip
         total_frames: Optional[int] = None
+        decord_error: Optional[str] = None
         try:
             from decord import VideoReader, cpu
             vr = VideoReader(str(p), ctx=cpu(0), num_threads=1)
             total_frames = len(vr)
-        except Exception:
-            pass
+        except Exception as e:
+            # Not fatal (unlike the sibling adapters, which bail): the processor
+            # falls back to its own frame sampling, so the clip is annotated at
+            # a different frame count than the config implies. Warn and record
+            # it so the degradation is not silent.
+            decord_error = f"decord_failed={repr(e)}"
+            print(f"Warning: {decord_error} for {p}; using processor default frame sampling")
 
         video_content: Dict[str, Any] = {"type": "video", "video": str(p)}
         if total_frames:
@@ -199,5 +205,6 @@ class Qwen3Video(BaseVLM):
                 "hf_model_id": self.model_id,
                 "video_path": str(p),
                 "completion": raw_text,
+                **({"error": decord_error} if decord_error else {}),
             },
         )

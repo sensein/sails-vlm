@@ -32,11 +32,15 @@ export SAILS_DATA_ROOT=/orcd/data/satra/002/projects/SAILS   # or copy sails-vlm
 
 | extra | models | pins |
 |---|---|---|
-| `qwen` | qwen2_5, qwen3, qwen3_video | transformers (exact pin), qwen-vl-utils |
-| `cosmos` | cosmos, cosmos_video | transformers (exact pin) |
-| `ovis2` | ovis2 | transformers (exact pin) |
-| `internvl` | internvl | transformers (exact pin), bitsandbytes (4-bit quantization — shipped configs set `load_in_4bit: true`) |
+| `qwen` | qwen2_5, qwen3, qwen3_video | transformers (exact pin), qwen-vl-utils, accelerate (`device_map`), bitsandbytes (4-bit quantization — shipped qwen3 configs set `load_in_4bit: true`) |
+| `cosmos` | cosmos, cosmos_video | transformers (exact pin), accelerate (`device_map`) |
+| `ovis2` | ovis2 | transformers (exact pin) — this adapter uses neither `device_map` nor quantization |
+| `internvl` | internvl | transformers (exact pin), bitsandbytes (4-bit quantization — shipped configs set `load_in_4bit: true`), accelerate (`device_map`) |
 | `text-metrics` | free-text eval (BLEU/ROUGE/semantic) | rouge, nltk, sentence-transformers, scipy |
+
+`accelerate` is a per-family extra, not a core dependency: `uv sync` alone
+installs neither it nor `bitsandbytes`, so pick the extra for the family you
+plan to run.
 
 Model weights must be pre-cached in the HuggingFace cache before running
 (`local_files_only: true`). Set `HF_HOME` if you want to use a shared cache
