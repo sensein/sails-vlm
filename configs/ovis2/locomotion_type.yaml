@@ -54,4 +54,5 @@ prompt:
 
 evaluation:
   metrics:
+  - balanced_accuracy
   - accuracy

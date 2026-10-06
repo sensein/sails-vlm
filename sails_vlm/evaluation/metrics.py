@@ -39,7 +39,7 @@ def evaluate_classification(
     """Evaluate classification predictions.
 
     Supported metrics (pass any combination in *metrics*):
-        accuracy, top2_accuracy, f1_macro, precision_macro, recall_macro,
+        balanced_accuracy (== recall_macro), accuracy, top2_accuracy, f1_macro, precision_macro, recall_macro,
         per_class_metrics, cohen_kappa, confusion_matrix.
     """
     logger = logging.getLogger(__name__)
@@ -48,6 +48,20 @@ def evaluate_classification(
     out["invalid_rate"] = sum(1 for p in y_pred if p == invalid_label) / max(
         1, len(y_pred)
     )
+
+    # Balanced accuracy == macro-averaged recall. Lab convention (2026-07-24):
+    # this is the headline classification metric, so it is emitted first,
+    # right after the bookkeeping fields. Computed once, shared with
+    # recall_macro below.
+    _macro_recall: Optional[float] = None
+    if "balanced_accuracy" in metrics or "recall_macro" in metrics:
+        _macro_recall = float(
+            recall_score(
+                y_true, y_pred, labels=labels, average="macro", zero_division=0
+            )
+        )
+    if "balanced_accuracy" in metrics:
+        out["balanced_accuracy"] = _macro_recall
 
     if "accuracy" in metrics:
         out["accuracy"] = float(accuracy_score(y_true, y_pred))
@@ -82,11 +96,7 @@ def evaluate_classification(
         )
 
     if "recall_macro" in metrics:
-        out["recall_macro"] = float(
-            recall_score(
-                y_true, y_pred, labels=labels, average="macro", zero_division=0
-            )
-        )
+        out["recall_macro"] = _macro_recall
 
     if "per_class_metrics" in metrics:
         per_class_p = precision_score(

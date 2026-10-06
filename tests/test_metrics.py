@@ -32,6 +32,33 @@ class TestEvaluateClassification:
         )
         assert results["accuracy"] == pytest.approx(0.5)
 
+    def test_balanced_accuracy_aliases_recall_macro(self):
+        y_true = ["rocking", "jumping", "spinning", "rocking"]
+        y_pred = ["rocking", "jumping", "rocking", "spinning"]
+        results = evaluate_classification(
+            y_true=y_true,
+            y_pred=y_pred,
+            labels=["rocking", "jumping", "spinning"],
+            binary=False,
+            metrics=["balanced_accuracy", "recall_macro"],
+        )
+        assert results["balanced_accuracy"] == pytest.approx(
+            results["recall_macro"]
+        )
+
+    def test_balanced_accuracy_is_first_metric_key(self):
+        """Contract (spec §10): when requested, balanced_accuracy is the first
+        metric key after the n/invalid_rate bookkeeping fields — regardless of
+        its position in the requested metrics list."""
+        results = evaluate_classification(
+            y_true=["rocking", "jumping"],
+            y_pred=["rocking", "rocking"],
+            labels=["rocking", "jumping"],
+            binary=False,
+            metrics=["accuracy", "f1_macro", "balanced_accuracy"],
+        )
+        assert list(results.keys())[:3] == ["n", "invalid_rate", "balanced_accuracy"]
+
 
 class TestEvaluateCounting:
     def test_exact_counts(self):
@@ -44,8 +71,20 @@ class TestEvaluateCounting:
 
 
 def test_evaluate_description_needs_text_extra():
-    """evaluate_description lazily imports rouge/nltk/sentence-transformers;
-    without the text-metrics extra it must raise ImportError, not crash at
-    module import time."""
-    pytest.importorskip("rouge", reason="text-metrics extra not installed")
-    from sails_vlm.evaluation.metrics import evaluate_description  # noqa: F401
+    """evaluate_description imports rouge lazily INSIDE the function, so
+    module import never raises; calling it with a lexical metric and without
+    the text-metrics extra must raise ImportError."""
+    try:
+        import rouge  # noqa: F401
+    except ImportError:
+        pass
+    else:
+        pytest.skip("text-metrics extra installed; missing-dep path not testable")
+    from sails_vlm.evaluation.metrics import evaluate_description
+
+    with pytest.raises(ImportError):
+        evaluate_description(
+            predictions=["a child waving"],
+            ground_truths=["a child waves"],
+            metrics=["rouge1"],
+        )

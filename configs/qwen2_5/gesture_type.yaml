@@ -64,5 +64,6 @@ prompt:
 
 evaluation:
   metrics:
+  - balanced_accuracy
   - accuracy
   - top2_accuracy
